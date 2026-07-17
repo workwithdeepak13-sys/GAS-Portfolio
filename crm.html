@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<title>Orbit CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+<style>
+:root{
+  --bg:#f7f8f5;
+  --surface:#ffffff;
+  --surface-2:#f1f3ee;
+  --border:#e4e6de;
+  --text:#0f1912;
+  --muted:#5b6b62;
+  --accent:#0f7a4a;
+  --accent-2:#12925a;
+  --accent-soft:#dff4e8;
+  --danger:#c1424c;
+  --warn:#c78a2b;
+  --shadow: 0 1px 2px rgba(15,25,18,.04), 0 8px 24px -12px rgba(15,25,18,.12);
+  --radius:14px;
+}
+html.dark{
+  --bg:#0b120e;
+  --surface:#111a14;
+  --surface-2:#0e1611;
+  --border:#1e2a22;
+  --text:#e8efe9;
+  --muted:#8fa39a;
+  --accent:#3ddc97;
+  --accent-2:#2ec987;
+  --accent-soft:#0f2a1e;
+  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 20px 40px -20px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Geist','Inter',system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--text)}
+.serif{font-family:'Instrument Serif',serif;font-weight:400;letter-spacing:.2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+
+/* --------------- layout --------------- */
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:22px 16px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 20px}
+.brand-dot{width:28px;height:28px;border-radius:9px;background:var(--accent);position:relative;overflow:hidden}
+.brand-dot:after{content:"";position:absolute;inset:6px;border-radius:5px;background:var(--surface);opacity:.35}
+.brand-name{font-family:'Instrument Serif',serif;font-size:22px;line-height:1}
+.brand-sub{font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:2px}
+
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;color:var(--muted);transition:background .18s,color .18s,transform .18s;user-select:none}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--accent-soft);color:var(--accent-2);font-weight:600}
+.nav-item .icon{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center}
+
+.sidebar-foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:4px 8px;background:var(--surface-2);border-radius:999px;color:var(--muted)}
+
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{display:flex;align-items:center;gap:14px;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20}
+.search{flex:1;position:relative;max-width:560px}
+.search input{width:100%;padding:10px 14px 10px 38px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);outline:none;transition:border-color .18s,background .18s}
+.search input:focus{border-color:var(--accent);background:var(--surface)}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);max-height:360px;overflow:auto;z-index:40;display:none}
+.search-results.open{display:block}
+.search-group{padding:8px 4px}
+.search-group h5{margin:0;padding:4px 12px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.search-row{padding:8px 12px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+.search-row:hover{background:var(--surface-2)}
+.search-row small{color:var(--muted)}
+
+.top-actions{display:flex;align-items:center;gap:8px}
+.icon-btn{border:1px solid var(--border);background:var(--surface);width:36px;height:36px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background .18s,transform .18s;position:relative}
+.icon-btn:hover{background:var(--surface-2)}
+.badge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:10px;border-radius:999px;padding:1px 6px;font-weight:600}
+.user-pill{display:flex;align-items:center;gap:10px;padding:5px 10px 5px 5px;border:1px solid var(--border);border-radius:999px;background:var(--surface)}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:12px}
+
+.content{padding:28px 32px;min-width:0}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.page-title{font-family:'Instrument Serif',serif;font-size:44px;line-height:1;margin:0}
+.page-sub{color:var(--muted);margin-top:6px;font-size:13px}
+.page-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.btn{border:1px solid var(--border);background:var(--surface);padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:500;transition:background .18s,transform .18s,border-color .18s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--danger);border-color:var(--border)}
+.btn.small{padding:5px 10px;font-size:12px;border-radius:8px}
+
+/* --------------- cards / kpis --------------- */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 18px 16px;position:relative;overflow:hidden}
+.kpi .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.14em}
+.kpi .value{font-family:'Instrument Serif',serif;font-size:38px;line-height:1;margin-top:8px}
+.kpi .delta{color:var(--accent-2);font-size:12px;margin-top:6px}
+.kpi .spark{position:absolute;right:14px;bottom:12px;opacity:.35}
+
+/* --------------- tables --------------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.card-head h3{margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:22px}
+
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+.table th{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-size:11px;font-weight:600;background:var(--surface-2)}
+.table tr{cursor:pointer;transition:background .12s}
+.table tr:hover{background:var(--surface-2)}
+.table td.right{text-align:right}
+.pagination{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;gap:12px;flex-wrap:wrap}
+.pagenums{display:flex;gap:4px;align-items:center}
+.pagenums button{border:1px solid var(--border);background:var(--surface);padding:6px 10px;border-radius:8px;cursor:pointer;min-width:32px}
+.pagenums button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pagenums input{width:56px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2)}
+
+.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.03em}
+.tag.stage-New{background:#e6eef7;color:#2b4f77}
+.tag.stage-Contacted{background:#eee0f5;color:#6b3b8a}
+.tag.stage-Qualified{background:#e0efe6;color:#1f6b45}
+.tag.stage-Proposal-Sent{background:#fff1d6;color:#8a5a12}
+.tag.stage-Won{background:#d5f2df;color:#0e6a3a}
+.tag.stage-Lost{background:#fadadd;color:#8a2a34}
+html.dark .tag.stage-New{background:#182838;color:#93b5d8}
+html.dark .tag.stage-Contacted{background:#2a1c34;color:#c9a8dc}
+html.dark .tag.stage-Qualified{background:#122a1e;color:#84c7a0}
+html.dark .tag.stage-Proposal-Sent{background:#332510;color:#e5b463}
+html.dark .tag.stage-Won{background:#0f2a1c;color:#63d69a}
+html.dark .tag.stage-Lost{background:#331419;color:#e08893}
+
+.sla-dot{width:8px;height:8px;border-radius:50%;background:var(--warn);display:inline-block;margin-right:6px;box-shadow:0 0 0 3px rgba(199,138,43,.15)}
+.sla-dot.crit{background:var(--danger);box-shadow:0 0 0 3px rgba(193,66,76,.15)}
+
+/* --------------- skeleton --------------- */
+.skel{position:relative;overflow:hidden;background:var(--surface-2);border-radius:6px}
+.skel:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.55) 50%,transparent 100%);animation:shimmer 1.4s infinite}
+html.dark .skel:after{background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.06) 50%,transparent 100%)}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.skel-row{height:14px;margin:8px 0}
+.skel-card{padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+
+/* --------------- kanban --------------- */
+.kanban{display:grid;grid-template-columns:repeat(6,minmax(240px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
+.kcol{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;min-height:360px;display:flex;flex-direction:column;gap:10px}
+.kcol h4{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.kcol h4 .count{background:var(--surface-2);padding:2px 8px;border-radius:999px;font-size:11px}
+.kcol.drop{outline:2px dashed var(--accent);outline-offset:-6px;background:var(--accent-soft)}
+.kcard{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;cursor:grab;transition:transform .15s, box-shadow .15s}
+.kcard:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.kcard.dragging{opacity:.5}
+.kcard h5{margin:0 0 4px;font-size:13px;font-weight:600}
+.kcard small{color:var(--muted);font-size:11px}
+.kcard .score{float:right;font-size:11px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1px 6px}
+
+/* --------------- side panel --------------- */
+.overlay{position:fixed;inset:0;background:rgba(15,25,18,.35);opacity:0;pointer-events:none;transition:opacity .22s;z-index:80}
+.overlay.open{opacity:1;pointer-events:auto}
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(520px,92vw);background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow);transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.9,.2,1);z-index:90;display:flex;flex-direction:column}
+.panel.open{transform:translateX(0)}
+.panel-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.panel-body{padding:18px 20px;overflow:auto;flex:1}
+.timeline{position:relative;padding-left:18px}
+.timeline:before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:14px}
+.tl-item:before{content:"";position:absolute;left:-16px;top:6px;width:10px;height:10px;background:var(--accent);border-radius:50%;box-shadow:0 0 0 3px var(--surface)}
+.tl-item .meta{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.tl-item h6{margin:2px 0;font-size:13px}
+
+/* --------------- forms / modal-like input --------------- */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.field input,.field select,.field textarea{padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);transition:border-color .18s,background .18s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+
+/* --------------- notifications --------------- */
+.notif-popover{position:absolute;right:20px;top:56px;width:340px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);z-index:60;display:none;overflow:hidden}
+.notif-popover.open{display:block}
+.notif-item{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;gap:10px;align-items:flex-start;transition:background .12s}
+.notif-item:hover{background:var(--surface-2)}
+.notif-item:last-child{border:none}
+.notif-item .dot{width:8px;height:8px;border-radius:50%;background:var(--warn);margin-top:6px;flex:0 0 auto}
+.notif-item.critical .dot{background:var(--danger)}
+
+/* --------------- reports --------------- */
+.rgrid{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+@media (max-width: 1100px){ .rgrid{grid-template-columns:1fr} }
+.bar-row{display:flex;align-items:center;gap:12px;margin:8px 0}
+.bar-row .label{width:120px;font-size:12px;color:var(--muted)}
+.bar-row .bar-wrap{flex:1;background:var(--surface-2);border-radius:999px;overflow:hidden;height:14px;position:relative}
+.bar-row .bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:999px;transition:width .8s cubic-bezier(.2,.9,.2,1)}
+.bar-row .val{width:52px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* --------------- misc --------------- */
+.empty{padding:36px 20px;text-align:center;color:var(--muted)}
+.empty .big{font-family:'Instrument Serif',serif;font-size:36px;color:var(--text)}
+.hidden{display:none !important}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.toolbar select,.toolbar input{padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2)}
+.upload-inline{display:none}
+.progress{height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden;margin:8px 0}
+.progress .fill{height:100%;background:var(--accent);width:0%;transition:width .2s}
+
+/* scrollbar */
+::-webkit-scrollbar{height:10px;width:10px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* undo toast */
+.undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:12px 18px;border-radius:999px;display:flex;gap:14px;align-items:center;box-shadow:var(--shadow);z-index:120;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.undo-toast.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(-4px)}
+.undo-toast button{background:transparent;border:1px solid rgba(255,255,255,.25);color:inherit;padding:4px 10px;border-radius:999px;cursor:pointer}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="brand-name">Orbit CRM</div>
+        <div class="brand-sub">Pipeline · in orbit</div>
+      </div>
+    </div>
+
+    <div class="nav-item active" data-nav="dashboard" data-testid="nav-dashboard">
+      <span class="icon">◐</span> Dashboard
+    </div>
+    <div class="nav-item" data-nav="leads" data-testid="nav-leads">
+      <span class="icon">◇</span> Leads
+    </div>
+    <div class="nav-item" data-nav="kanban" data-testid="nav-kanban">
+      <span class="icon">▤</span> Pipeline
+    </div>
+    <div class="nav-item" data-nav="accounts" data-testid="nav-accounts">
+      <span class="icon">▢</span> Accounts
+    </div>
+    <div class="nav-item" data-nav="contacts" data-testid="nav-contacts">
+      <span class="icon">◍</span> Contacts
+    </div>
+    <div class="nav-item" data-nav="deals" data-testid="nav-deals">
+      <span class="icon">◈</span> Deals
+    </div>
+    <div class="nav-item" data-nav="reports" data-testid="nav-reports">
+      <span class="icon">◱</span> Reports
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="chip" id="footRole">— · —</div>
+      <button class="btn small" id="themeToggle" data-testid="theme-toggle">Toggle theme</button>
+      <button class="btn small ghost" id="refreshAll" data-testid="refresh-all">Refresh data</button>
+      <div class="chip mono" style="justify-content:center">v1.0.0</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="search">
+        <span class="search-icon">⌕</span>
+        <input id="globalSearch" placeholder="Search leads, contacts, companies…" data-testid="global-search"/>
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="notifBtn" data-testid="notif-btn">
+          <span>◔</span>
+          <span class="badge hidden" id="notifBadge">0</span>
+        </button>
+        <div class="user-pill">
+          <div class="avatar" id="userAvatar">–</div>
+          <div>
+            <div id="userName" style="font-size:13px;font-weight:600">Loading…</div>
+            <div id="userRole" style="font-size:11px;color:var(--muted)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="notif-popover" id="notifPopover"></div>
+    </div>
+
+    <div class="content" id="content">
+      <!-- rendered -->
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="panel" id="panel">
+  <div class="panel-head">
+    <div>
+      <div class="mono" style="font-size:11px;color:var(--muted);letter-spacing:.16em" id="panelKind">LEAD</div>
+      <h3 class="serif" style="margin:6px 0 0;font-size:26px" id="panelTitle">—</h3>
+      <div style="color:var(--muted);font-size:13px;margin-top:2px" id="panelSub"></div>
+    </div>
+    <button class="icon-btn" id="panelClose">✕</button>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+</div>
+
+<div class="undo-toast" id="undoToast">
+  <span id="undoText"></span>
+  <button id="undoBtn">Undo</button>
+</div>
+
+<script>
+/* ============================================================
+   Orbit CRM — client
+   ============================================================ */
+
+// --- utility to call server ---
+function call(fnName, ...args){
+  return new Promise(function(resolve){
+    google.script.run
+      .withSuccessHandler(function(r){
+        if (!r) return resolve({ success:false, error:'empty response' });
+        resolve(r);
+      })
+      .withFailureHandler(function(err){ resolve({ success:false, error: err && err.message ? err.message : String(err) }); })
+      [fnName].apply(google.script.run, args);
+  });
+}
+
+// --- state ---
+const state = {
+  me: null,
+  users: [],
+  config: {},
+  stages: ['New','Contacted','Qualified','Proposal Sent','Won','Lost'],
+  sources: [],
+  roles: [],
+  view: 'dashboard',
+  cache: new Map(),            // pagination + list cache
+  perPage: { Leads:25, Contacts:25, Accounts:25, Deals:25 },
+  page: { Leads:1, Contacts:1, Accounts:1, Deals:1 },
+  sort: { Leads:{key:'createdAt',dir:'desc'}, Contacts:{key:'createdAt',dir:'desc'}, Accounts:{key:'createdAt',dir:'desc'}, Deals:{key:'createdAt',dir:'desc'} },
+  lastDelete: null,
+  notifs: []
+};
+
+// dev fallback: if google.script.run isn't available, provide a mock so page still renders
+if (typeof google === 'undefined' || !google.script || !google.script.run) {
+  window.google = { script: { run: new Proxy({}, {
+    get: function(_, fn){
+      return function(){ return { withSuccessHandler: function(cb){ setTimeout(function(){ cb({success:false, error:'Not running inside Apps Script'}); },0); return this; }, withFailureHandler:function(){return this;} }; };
+    }
+  })}};
+}
+
+// --- caching helpers ---
+function cacheKey(entity, filters, sort, page, size){
+  return entity+':'+JSON.stringify(filters||{})+':'+(sort?sort.key+'-'+sort.dir:'')+':'+page+':'+size;
+}
+function cacheGet(k){
+  const v = state.cache.get(k);
+  if (!v) return null;
+  if (Date.now() - v.fetchedAt > 5*60*1000) { state.cache.delete(k); return null; }
+  return v.payload;
+}
+function cachePut(k, payload){ state.cache.set(k, { payload:payload, fetchedAt:Date.now() }); }
+function cacheInvalidate(entity){
+  for (const k of Array.from(state.cache.keys())) if (k.indexOf(entity+':')===0) state.cache.delete(k);
+}
+
+// --- theme ---
+function applyTheme(t){
+  document.documentElement.classList.toggle('dark', t === 'dark');
+  localStorage.setItem('theme', t);
+}
+applyTheme(localStorage.getItem('theme') || 'light');
+document.getElementById('themeToggle').addEventListener('click', function(){
+  applyTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
+});
+document.getElementById('refreshAll').addEventListener('click', function(){
+  state.cache.clear(); render();
+});
+
+// --- nav ---
+document.querySelectorAll('.nav-item').forEach(function(el){
+  el.addEventListener('click', function(){
+    document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+    el.classList.add('active');
+    state.view = el.dataset.nav;
+    render();
+  });
+});
+
+// --- boot ---
+(async function boot(){
+  const r = await call('bootstrap');
+  if (!r.success) {
+    Swal.fire({ icon:'error', title:'Setup required', html:'Run <b>⚙️ Setup → Initialize System</b> from the spreadsheet menu first.<br><br><small>' + (r.error||'') + '</small>' });
+    renderEmpty();
+    return;
+  }
+  state.me = r.data.me;
+  state.users = r.data.users;
+  state.config = r.data.config;
+  state.stages = r.data.stages || state.stages;
+  state.sources = r.data.sources || [];
+  state.roles = r.data.roles || [];
+
+  document.getElementById('userName').textContent = state.me.name || state.me.email || 'Guest';
+  document.getElementById('userRole').textContent = state.me.role || '—';
+  document.getElementById('userAvatar').textContent = (state.me.name||state.me.email||'?').substring(0,1).toUpperCase();
+  document.getElementById('footRole').textContent = (state.me.role||'—') + ' · ' + (state.me.email||'—');
+
+  loadNotifs();
+  setInterval(loadNotifs, 60*1000);
+  render();
+})();
+
+async function loadNotifs(){
+  const r = await call('getNotifications');
+  if (!r.success) return;
+  state.notifs = r.data || [];
+  const b = document.getElementById('notifBadge');
+  if (state.notifs.length) { b.textContent = state.notifs.length; b.classList.remove('hidden'); }
+  else b.classList.add('hidden');
+}
+document.getElementById('notifBtn').addEventListener('click', function(){
+  const p = document.getElementById('notifPopover');
+  p.classList.toggle('open');
+  if (p.classList.contains('open')) {
+    if (!state.notifs.length) { p.innerHTML = '<div class="empty"><div class="big">✓</div>No overdue follow-ups.</div>'; return; }
+    p.innerHTML = state.notifs.map(function(n){
+      return '<div class="notif-item '+(n.type==='critical'?'critical':'')+'" data-lead="'+n.leadId+'"><span class="dot"></span><div><div style="font-weight:600">'+escape(n.title)+'</div><small style="color:var(--muted)">'+escape(n.body)+'</small></div></div>';
+    }).join('');
+    p.querySelectorAll('.notif-item').forEach(function(el){
+      el.addEventListener('click', function(){ openLead(el.dataset.lead); p.classList.remove('open'); });
+    });
+  }
+});
+document.addEventListener('click', function(e){
+  const p = document.getElementById('notifPopover');
+  if (!p.contains(e.target) && !document.getElementById('notifBtn').contains(e.target)) p.classList.remove('open');
+});
+
+// ============================================================
+// Global search
+// ============================================================
+const searchInput = document.getElementById('globalSearch');
+const searchResults = document.getElementById('searchResults');
+let searchTimer = null;
+searchInput.addEventListener('input', function(){
+  clearTimeout(searchTimer);
+  const q = searchInput.value.trim();
+  if (!q) { searchResults.classList.remove('open'); return; }
+  // client-side quick pass from any cached rows
+  const local = clientSearch(q);
+  renderSearch(local, true);
+  searchTimer = setTimeout(async function(){
+    const r = await call('globalSearch', q);
+    if (r.success) renderSearch(r.data, false);
+  }, 220);
+});
+document.addEventListener('click', function(e){
+  if (!searchResults.contains(e.target) && e.target !== searchInput) searchResults.classList.remove('open');
+});
+function clientSearch(q){
+  q = q.toLowerCase();
+  const out = { leads:[], contacts:[], accounts:[] };
+  state.cache.forEach(function(entry, k){
+    const rows = entry.payload && entry.payload.rows;
+    if (!rows) return;
+    if (k.startsWith('Leads:'))    out.leads    = out.leads.concat(rows.filter(function(r){ return match(r,q,['name','email','company']); }));
+    if (k.startsWith('Contacts:')) out.contacts = out.contacts.concat(rows.filter(function(r){ return match(r,q,['name','email','title']); }));
+    if (k.startsWith('Accounts:')) out.accounts = out.accounts.concat(rows.filter(function(r){ return match(r,q,['name','industry','website']); }));
+  });
+  ['leads','contacts','accounts'].forEach(function(g){
+    const seen = new Set(); out[g] = out[g].filter(function(r){ if (seen.has(r.id)) return false; seen.add(r.id); return true; }).slice(0,8);
+  });
+  return out;
+}
+function match(row,q,fields){ for (var i=0;i<fields.length;i++) if (String(row[fields[i]]||'').toLowerCase().indexOf(q)!==-1) return true; return false; }
+function renderSearch(data, isLocal){
+  const total = (data.leads.length + data.contacts.length + data.accounts.length);
+  if (!total) { searchResults.innerHTML = '<div class="empty">No matches</div>'; searchResults.classList.add('open'); return; }
+  let html = '';
+  function group(title, rows, kind, formatter){
+    if (!rows.length) return '';
+    return '<div class="search-group"><h5>'+title+'</h5>' +
+      rows.map(function(r){
+        return '<div class="search-row" data-kind="'+kind+'" data-id="'+r.id+'"><span>'+escape(formatter(r))+'</span><small>'+escape(r.email||r.website||r.industry||'')+'</small></div>';
+      }).join('') + '</div>';
+  }
+  html += group('Leads', data.leads, 'lead', function(r){ return r.name + (r.company?(' · '+r.company):''); });
+  html += group('Contacts', data.contacts, 'contact', function(r){ return r.name; });
+  html += group('Accounts', data.accounts, 'account', function(r){ return r.name; });
+  if (isLocal) html += '<div style="padding:6px 12px;color:var(--muted);font-size:11px">Showing cached matches · refining…</div>';
+  searchResults.innerHTML = html;
+  searchResults.classList.add('open');
+  searchResults.querySelectorAll('.search-row').forEach(function(el){
+    el.addEventListener('click', function(){
+      const kind = el.dataset.kind, id = el.dataset.id;
+      searchResults.classList.remove('open');
+      if (kind === 'lead') openLead(id);
+      else if (kind === 'contact') openRecord('Contacts', id);
+      else openRecord('Accounts', id);
+    });
+  });
+}
+
+// ============================================================
+// Router
+// ============================================================
+function render(){
+  const el = document.getElementById('content');
+  el.innerHTML = '';
+  switch (state.view) {
+    case 'dashboard': renderDashboard(el); break;
+    case 'leads':     renderList(el, 'Leads'); break;
+    case 'kanban':    renderKanban(el); break;
+    case 'accounts':  renderList(el, 'Accounts'); break;
+    case 'contacts':  renderList(el, 'Contacts'); break;
+    case 'deals':     renderList(el, 'Deals'); break;
+    case 'reports':   renderReports(el); break;
+  }
+}
+
+function renderEmpty(){
+  document.getElementById('content').innerHTML = '<div class="empty"><div class="big">◐</div><p>Waiting for setup. Please run <b>⚙️ Setup → Initialize System</b> in your spreadsheet.</p></div>';
+}
+
+// ============================================================
+// Dashboard
+// ============================================================
+async function renderDashboard(host){
+  host.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Welcome back, ${escape((state.me.name||'').split(' ')[0] || 'there')}.</h1>
+        <div class="page-sub">A quiet, focused view of what needs your attention today.</div>
+      </div>
+    </div>
+    <div class="kpi-grid" id="kpiGrid">
+      ${skeletonKpi()}${skeletonKpi()}${skeletonKpi()}${skeletonKpi()}
+    </div>
+    <div class="rgrid">
+      <div class="card" id="pipelineCard"><div class="card-head"><h3>Pipeline funnel</h3></div><div style="padding:18px" id="funnelHost">${skeletonBars(6)}</div></div>
+      <div class="card"><div class="card-head"><h3>Overdue follow-ups</h3></div><div id="overdueHost" style="padding:6px 6px 10px">${skeletonRows(4)}</div></div>
+    </div>
+  `;
+  const rep = await getReportsCached();
+  const overdue = state.notifs;
+
+  const totalLeads = rep.funnel.reduce(function(s,f){return s+f.count;},0);
+  const won = (rep.funnel.find(function(f){return f.stage==='Won';})||{count:0}).count;
+  const openPipe = rep.funnel.filter(function(f){return ['Won','Lost'].indexOf(f.stage)===-1;}).reduce(function(s,f){return s+f.count;},0);
+  const winRate = totalLeads ? Math.round((won/totalLeads)*100) : 0;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    ${kpi('Total leads', totalLeads, 'live count')}
+    ${kpi('Open pipeline', openPipe, 'excludes won / lost')}
+    ${kpi('Win rate', winRate + '%', 'across all sources')}
+    ${kpi('Overdue', overdue.length, 'awaiting a touch')}
+  `;
+
+  const max = Math.max.apply(null, rep.funnel.map(function(f){return f.count;}).concat([1]));
+  document.getElementById('funnelHost').innerHTML = rep.funnel.map(function(f){
+    const pct = Math.round((f.count/max)*100);
+    return `<div class="bar-row"><div class="label">${f.stage}</div><div class="bar-wrap"><div class="bar" style="width:${pct}%"></div></div><div class="val">${f.count}</div></div>`;
+  }).join('');
+
+  const oh = document.getElementById('overdueHost');
+  if (!overdue.length) oh.innerHTML = '<div class="empty">Inbox zero — nice.</div>';
+  else oh.innerHTML = '<table class="table"><tbody>' + overdue.slice(0,6).map(function(n){
+    return '<tr data-lead="'+n.leadId+'"><td><span class="sla-dot '+(n.type==='critical'?'crit':'')+'"></span>'+escape(n.title.replace('Follow up: ',''))+'</td><td class="right"><small style="color:var(--muted)">'+escape(n.body)+'</small></td></tr>';
+  }).join('') + '</tbody></table>';
+  oh.querySelectorAll('tr').forEach(function(tr){ tr.addEventListener('click', function(){ openLead(tr.dataset.lead); }); });
+}
+
+function kpi(label, value, delta){
+  return `<div class="kpi"><div class="label">${label}</div><div class="value">${value}</div><div class="delta">${delta}</div></div>`;
+}
+function skeletonKpi(){ return '<div class="kpi"><div class="skel skel-row" style="width:40%"></div><div class="skel" style="height:34px;width:60%;margin:12px 0 6px"></div><div class="skel skel-row" style="width:30%"></div></div>'; }
+function skeletonBars(n){ let h=''; for(let i=0;i<n;i++) h += '<div class="bar-row"><div class="label"><div class="skel skel-row" style="width:80%"></div></div><div class="bar-wrap"><div class="skel" style="height:14px;width:'+(30+i*10)+'%"></div></div><div class="val"><div class="skel skel-row" style="width:100%"></div></div></div>'; return h; }
+function skeletonRows(n){ let h='<div style="padding:8px 14px">'; for(let i=0;i<n;i++) h += '<div class="skel skel-row" style="width:'+(50+i*8)+'%"></div>'; return h+'</div>'; }
+function skeletonTable(n){ let h='<table class="table"><thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Stage</th><th>Owner</th></tr></thead><tbody>'; for(let i=0;i<n;i++) h += '<tr>'+'<td><div class="skel skel-row"></div></td>'.repeat(5)+'</tr>'; return h+'</tbody></table>'; }
+
+async function getReportsCached(){
+  const key = 'reports:v1';
+  const cached = cacheGet(key);
+  if (cached) return cached;
+  const r = await call('getReports');
+  if (r.success) { cachePut(key, r.data); return r.data; }
+  return { funnel:[], sourceRoi:[], leaderboard:[] };
+}
+
+// ============================================================
+// Generic list view (Leads / Contacts / Accounts / Deals)
+// ============================================================
+const LIST_CONFIG = {
+  Leads: {
+    columns: [
+      { key:'name',    label:'Name' },
+      { key:'company', label:'Company' },
+      { key:'email',   label:'Email' },
+      { key:'stage',   label:'Stage', render: function(v){ return '<span class="tag stage-'+String(v).replace(' ','-')+'">'+escape(v)+'</span>'; }},
+      { key:'score',   label:'Score', className:'right' },
+      { key:'ownerEmail', label:'Owner' },
+      { key:'lastContactedDate', label:'Last touch', render: function(v,row){ return slaCell(v, state.config['sla.followUpDays']); }}
+    ],
+    filters: [
+      { key:'stage', label:'Stage', options: state.stages },
+      { key:'source', label:'Source', options: [] }, // filled at runtime
+      { key:'ownerEmail', label:'Owner', options: [] }
+    ],
+    csvTemplate: 'name,email,phone,company,source,stage,score,ownerEmail\nAmelia Brooks,amelia@example.com,+1-555-0100,Acme Inc,Website,New,60,rep1@example.com\nDaniel Osei,daniel@example.com,+1-555-0101,Helios,LinkedIn,Contacted,50,rep2@example.com'
+  },
+  Contacts: {
+    columns: [
+      { key:'name',   label:'Name' },
+      { key:'email',  label:'Email' },
+      { key:'phone',  label:'Phone' },
+      { key:'title',  label:'Title' },
+      { key:'accountId', label:'Account' },
+      { key:'ownerEmail', label:'Owner' }
+    ],
+    filters: [{ key:'ownerEmail', label:'Owner', options: [] }],
+    csvTemplate: 'name,email,phone,title,accountId,ownerEmail\nJane Doe,jane@acme.com,+1-555-0200,VP Sales,1,rep1@example.com\nJohn Smith,john@acme.com,+1-555-0201,CTO,1,rep2@example.com'
+  },
+  Accounts: {
+    columns: [
+      { key:'name',     label:'Name' },
+      { key:'industry', label:'Industry' },
+      { key:'website',  label:'Website' },
+      { key:'phone',    label:'Phone' },
+      { key:'ownerEmail', label:'Owner' }
+    ],
+    filters: [{ key:'ownerEmail', label:'Owner', options: [] }],
+    csvTemplate: 'name,industry,website,phone,ownerEmail\nAcme Inc,Manufacturing,acme.com,+1-555-0300,rep1@example.com\nGlobex,Consulting,globex.com,+1-555-0301,rep2@example.com'
+  },
+  Deals: {
+    columns: [
+      { key:'title',  label:'Title' },
+      { key:'value',  label:'Value', className:'right', render: function(v){ return '$'+Number(v||0).toLocaleString(); }},
+      { key:'probability', label:'Prob', className:'right', render: function(v){ return (v||0)+'%'; }},
+      { key:'expectedCloseDate', label:'Close', render: function(v){ return v?formatDate(v):'—'; }},
+      { key:'stage',  label:'Stage', render: function(v){ return '<span class="tag stage-'+String(v).replace(' ','-')+'">'+escape(v)+'</span>'; }},
+      { key:'ownerEmail', label:'Owner' }
+    ],
+    filters: [{ key:'stage', label:'Stage', options: state.stages }],
+    csvTemplate: ''
+  }
+};
+
+function slaCell(dateStr, thresholdDays){
+  if (!dateStr) return '<span style="color:var(--muted)">—</span>';
+  const d = new Date(dateStr);
+  const days = Math.floor((new Date() - d) / (86400000));
+  const thr = Number(thresholdDays)||5;
+  const dot = days >= thr*2 ? '<span class="sla-dot crit"></span>' : (days >= thr ? '<span class="sla-dot"></span>' : '');
+  return dot + '<span class="mono" style="font-size:12px;color:var(--muted)">'+days+'d ago</span>';
+}
+
+async function renderList(host, entity){
+  const cfg = LIST_CONFIG[entity];
+  // populate dynamic filter options
+  cfg.filters.forEach(function(f){
+    if (f.key === 'source')  f.options = state.sources;
+    if (f.key === 'ownerEmail') f.options = state.users.map(function(u){return u.email;});
+  });
+
+  host.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">${entity}</h1>
+        <div class="page-sub">Every ${entity.toLowerCase()} in one place, ready to move.</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn" data-testid="btn-export">Export CSV</button>
+        <button class="btn" data-testid="btn-template">Sample template</button>
+        <label class="btn" style="cursor:pointer" data-testid="btn-import">
+          Import CSV<input type="file" accept=".csv" class="upload-inline" id="csvInput"/>
+        </label>
+        <button class="btn primary" data-testid="btn-new">+ New ${entity.slice(0,-1)}</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="toolbar" id="filters"></div>
+        <div class="toolbar">
+          <label style="font-size:12px;color:var(--muted)">Rows</label>
+          <select id="perPage">
+            ${[10,20,25,50,100].map(function(n){return '<option '+(n===state.perPage[entity]?'selected':'')+' value="'+n+'">'+n+'</option>';}).join('')}
+          </select>
+        </div>
+      </div>
+      <div id="tableHost">${skeletonTable(6)}</div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  `;
+
+  // filters UI
+  const fHost = host.querySelector('#filters');
+  fHost.innerHTML = cfg.filters.map(function(f){
+    const opts = ['<option value="">All '+f.label.toLowerCase()+'</option>'].concat(f.options.map(function(o){return '<option value="'+escape(o)+'">'+escape(o)+'</option>';})).join('');
+    return '<select data-filter="'+f.key+'">'+opts+'</select>';
+  }).join('');
+  const filters = {};
+  fHost.querySelectorAll('select').forEach(function(sel){
+    sel.addEventListener('change', function(){
+      filters[sel.dataset.filter] = sel.value;
+      state.page[entity] = 1;
+      loadList(entity, cfg, filters);
+    });
+  });
+
+  host.querySelector('#perPage').addEventListener('change', function(e){
+    state.perPage[entity] = Number(e.target.value);
+    state.page[entity] = 1;
+    loadList(entity, cfg, filters);
+  });
+
+  host.querySelector('[data-testid="btn-new"]').addEventListener('click', function(){ openCreateModal(entity); });
+  host.querySelector('[data-testid="btn-template"]').addEventListener('click', function(){ downloadCsv(entity.toLowerCase()+'-template.csv', cfg.csvTemplate); });
+  host.querySelector('[data-testid="btn-export"]').addEventListener('click', function(){ exportCurrent(entity); });
+  host.querySelector('[data-testid="btn-import"]').addEventListener('click', function(e){ /* label opens input */ });
+  host.querySelector('#csvInput').addEventListener('change', function(e){
+    const f = e.target.files[0]; if (!f) return;
+    const reader = new FileReader();
+    reader.onload = function(evt){ runImport(entity, evt.target.result); };
+    reader.readAsText(f);
+    e.target.value = '';
+  });
+
+  loadList(entity, cfg, filters);
+}
+
+async function loadList(entity, cfg, filters){
+  const page = state.page[entity], size = state.perPage[entity], sort = state.sort[entity];
+  const key = cacheKey(entity, filters, sort, page, size);
+  const cached = cacheGet(key);
+  const host = document.getElementById('tableHost');
+  if (cached) { paintList(entity, cfg, cached, filters); prefetchNext(entity, cfg, filters); return; }
+  host.innerHTML = skeletonTable(size > 20 ? 10 : 6);
+  const r = await call('getPagedData', entity, page, size, filters, sort.key, sort.dir);
+  if (!r.success) { host.innerHTML = '<div class="empty">Error: '+escape(r.error||'')+'</div>'; return; }
+  cachePut(key, r.data);
+  paintList(entity, cfg, r.data, filters);
+  prefetchNext(entity, cfg, filters);
+}
+
+async function prefetchNext(entity, cfg, filters){
+  const nextPage = state.page[entity] + 1;
+  const size = state.perPage[entity], sort = state.sort[entity];
+  const key = cacheKey(entity, filters, sort, nextPage, size);
+  if (cacheGet(key)) return;
+  const r = await call('getPagedData', entity, nextPage, size, filters, sort.key, sort.dir);
+  if (r.success && r.data.rows.length) cachePut(key, r.data);
+}
+
+function paintList(entity, cfg, data, filters){
+  const host = document.getElementById('tableHost');
+  const cols = cfg.columns;
+  if (!data.rows.length) {
+    host.innerHTML = '<div class="empty"><div class="big">◇</div>No '+entity.toLowerCase()+' match these filters yet.</div>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+  const thead = '<tr>'+cols.map(function(c){return '<th class="'+(c.className||'')+'" data-sort="'+c.key+'">'+c.label+'</th>';}).join('')+'</tr>';
+  const tbody = data.rows.map(function(r){
+    return '<tr data-id="'+r.id+'">'+cols.map(function(c){
+      const v = r[c.key];
+      const cell = c.render ? c.render(v, r) : (v===''||v===null||v===undefined?'—':escape(String(v)));
+      return '<td class="'+(c.className||'')+'">'+cell+'</td>';
+    }).join('')+'</tr>';
+  }).join('');
+  host.innerHTML = '<table class="table"><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table>';
+
+  host.querySelectorAll('tbody tr').forEach(function(tr){
+    tr.addEventListener('click', function(){
+      const id = tr.dataset.id;
+      if (entity === 'Leads') openLead(id);
+      else openRecord(entity, id);
+    });
+  });
+  host.querySelectorAll('th[data-sort]').forEach(function(th){
+    th.style.cursor = 'pointer';
+    th.addEventListener('click', function(){
+      const cur = state.sort[entity];
+      if (cur.key === th.dataset.sort) cur.dir = (cur.dir === 'asc' ? 'desc' : 'asc');
+      else { cur.key = th.dataset.sort; cur.dir = 'asc'; }
+      loadList(entity, cfg, filters);
+    });
+  });
+
+  renderPagination(entity, data, cfg, filters);
+}
+
+function renderPagination(entity, data, cfg, filters){
+  const total = data.total, size = data.pageSize, page = data.page;
+  const totalPages = Math.max(1, Math.ceil(total/size));
+  const from = (page-1)*size + 1, to = Math.min(page*size, total);
+  const nums = [];
+  const win = 5;
+  let start = Math.max(1, page - Math.floor(win/2));
+  let end = Math.min(totalPages, start + win - 1);
+  if (end - start + 1 < win) start = Math.max(1, end - win + 1);
+  for (let i=start; i<=end; i++) nums.push(i);
+
+  const el = document.getElementById('pagination');
+  el.innerHTML = `
+    <div style="color:var(--muted);font-size:12px">Showing ${from}–${to} of ${total}</div>
+    <div class="pagenums">
+      <button data-p="1" ${page===1?'disabled':''}>«</button>
+      <button data-p="${page-1}" ${page===1?'disabled':''}>‹</button>
+      ${nums.map(function(n){return '<button class="'+(n===page?'active':'')+'" data-p="'+n+'">'+n+'</button>';}).join('')}
+      <button data-p="${page+1}" ${page===totalPages?'disabled':''}>›</button>
+      <button data-p="${totalPages}" ${page===totalPages?'disabled':''}>»</button>
+      <span style="color:var(--muted);font-size:12px">jump</span>
+      <input type="number" min="1" max="${totalPages}" id="pageJump" value="${page}"/>
+    </div>
+  `;
+  el.querySelectorAll('button[data-p]').forEach(function(b){
+    b.addEventListener('click', function(){
+      const n = Number(b.dataset.p);
+      if (!n || n < 1 || n > totalPages || b.disabled) return;
+      state.page[entity] = n;
+      loadList(entity, cfg, filters);
+    });
+  });
+  const jump = el.querySelector('#pageJump');
+  jump.addEventListener('change', function(){
+    const n = Math.min(totalPages, Math.max(1, Number(jump.value)||1));
+    state.page[entity] = n; loadList(entity, cfg, filters);
+  });
+}
+
+// ============================================================
+// Kanban
+// ============================================================
+async function renderKanban(host){
+  host.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Pipeline</h1>
+        <div class="page-sub">Drag a card to move a lead across stages.</div>
+      </div>
+      <div class="page-actions"><button class="btn primary" data-testid="btn-new-lead">+ New Lead</button></div>
+    </div>
+    <div class="kanban" id="kanban">${state.stages.map(function(s){return '<div class="kcol"><h4>'+s+' <span class="count">…</span></h4><div class="skel" style="height:60px"></div><div class="skel" style="height:60px"></div></div>';}).join('')}</div>
+  `;
+  host.querySelector('[data-testid="btn-new-lead"]').addEventListener('click', function(){ openCreateModal('Leads'); });
+
+  // pull all leads (first 500 is plenty for a kanban)
+  const key = 'kanban:all';
+  let payload = cacheGet(key);
+  if (!payload) {
+    const r = await call('getPagedData','Leads',1,500,{},'createdAt','desc');
+    if (!r.success) return;
+    payload = r.data;
+    cachePut(key, payload);
+  }
+  paintKanban(payload.rows);
+}
+
+function paintKanban(rows){
+  const k = document.getElementById('kanban');
+  const thr = Number(state.config['sla.followUpDays'])||5;
+  k.innerHTML = state.stages.map(function(stage){
+    const items = rows.filter(function(r){return r.stage === stage;});
+    return `<div class="kcol" data-stage="${stage}">
+      <h4>${stage} <span class="count">${items.length}</span></h4>
+      ${items.map(function(l){
+        const days = l.lastContactedDate ? Math.floor((new Date()-new Date(l.lastContactedDate))/86400000) : 0;
+        const dot = days>=thr*2 ? '<span class="sla-dot crit"></span>' : (days>=thr ? '<span class="sla-dot"></span>' : '');
+        return `<div class="kcard" draggable="true" data-id="${l.id}">
+          <span class="score">${l.score||0}</span>
+          <h5>${dot}${escape(l.name)}</h5>
+          <small>${escape(l.company||'')}</small><br/>
+          <small style="color:var(--muted)">${escape(l.ownerEmail||'')}</small>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+
+  // drag+drop
+  let dragged = null;
+  k.querySelectorAll('.kcard').forEach(function(card){
+    card.addEventListener('dragstart', function(e){ dragged = card; card.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+    card.addEventListener('dragend', function(){ if (dragged) dragged.classList.remove('dragging'); dragged = null; k.querySelectorAll('.kcol').forEach(function(c){c.classList.remove('drop');}); });
+    card.addEventListener('click', function(){ openLead(card.dataset.id); });
+  });
+  k.querySelectorAll('.kcol').forEach(function(col){
+    col.addEventListener('dragover', function(e){ e.preventDefault(); col.classList.add('drop'); });
+    col.addEventListener('dragleave', function(){ col.classList.remove('drop'); });
+    col.addEventListener('drop', async function(e){
+      e.preventDefault(); col.classList.remove('drop');
+      if (!dragged) return;
+      const id = dragged.dataset.id;
+      const newStage = col.dataset.stage;
+      const r = await call('changeLeadStage', id, newStage);
+      if (!r.success) { Swal.fire({icon:'error',title:'Move failed',text:r.error}); return; }
+      cacheInvalidate('Leads'); state.cache.delete('kanban:all'); state.cache.delete('reports:v1');
+      renderKanban(document.getElementById('content'));
+    });
+  });
+}
+
+// ============================================================
+// Reports
+// ============================================================
+async function renderReports(host){
+  host.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Reports</h1>
+        <div class="page-sub">Where the pipeline actually pays off.</div>
+      </div>
+    </div>
+    <div class="rgrid">
+      <div class="card"><div class="card-head"><h3>Conversion funnel</h3></div><div id="rFunnel" style="padding:18px">${skeletonBars(6)}</div></div>
+      <div class="card"><div class="card-head"><h3>Source ROI</h3></div><div id="rSource" style="padding:18px">${skeletonBars(5)}</div></div>
+    </div>
+    <div style="height:14px"></div>
+    <div class="card"><div class="card-head"><h3>Rep leaderboard</h3></div><div id="rBoard">${skeletonRows(5)}</div></div>
+  `;
+  const rep = await getReportsCached();
+
+  const maxF = Math.max.apply(null, rep.funnel.map(function(f){return f.count;}).concat([1]));
+  document.getElementById('rFunnel').innerHTML = rep.funnel.map(function(f){
+    return `<div class="bar-row"><div class="label">${f.stage}</div><div class="bar-wrap"><div class="bar" style="width:${Math.round((f.count/maxF)*100)}%"></div></div><div class="val">${f.count}</div></div>`;
+  }).join('');
+
+  document.getElementById('rSource').innerHTML = rep.sourceRoi.map(function(s){
+    return `<div class="bar-row"><div class="label">${escape(s.source)}</div><div class="bar-wrap"><div class="bar" style="width:${s.winRate}%"></div></div><div class="val">${s.winRate}%</div></div>`;
+  }).join('') || '<div class="empty">No source data yet.</div>';
+
+  const board = rep.leaderboard.filter(function(r){return r.total>0;});
+  if (!board.length) document.getElementById('rBoard').innerHTML = '<div class="empty">No rep data yet.</div>';
+  else document.getElementById('rBoard').innerHTML = '<table class="table"><thead><tr><th>Rep</th><th>Total</th><th>Won</th><th>Lost</th><th>Win %</th></tr></thead><tbody>' +
+    board.map(function(r,i){
+      return '<tr><td>'+(i<3?'🏅 ':'')+escape(r.name||r.email)+'</td><td>'+r.total+'</td><td>'+r.won+'</td><td>'+r.lost+'</td><td>'+r.winRate+'%</td></tr>';
+    }).join('') + '</tbody></table>';
+}
+
+// ============================================================
+// Detail panel
+// ============================================================
+const overlay = document.getElementById('overlay'), panel = document.getElementById('panel');
+document.getElementById('panelClose').addEventListener('click', closePanel);
+overlay.addEventListener('click', closePanel);
+function openPanel(){ overlay.classList.add('open'); panel.classList.add('open'); }
+function closePanel(){ overlay.classList.remove('open'); panel.classList.remove('open'); }
+
+async function openLead(id){
+  const r = await call('getRecord','Leads', id);
+  if (!r.success || !r.data) { Swal.fire({icon:'error',title:'Not found'}); return; }
+  const lead = r.data;
+  document.getElementById('panelKind').textContent = 'LEAD · #' + lead.id;
+  document.getElementById('panelTitle').textContent = lead.name;
+  document.getElementById('panelSub').textContent = (lead.company||'') + ' · ' + (lead.email||'');
+  const body = document.getElementById('panelBody');
+  body.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div><small style="color:var(--muted)">Stage</small><div><span class="tag stage-${String(lead.stage).replace(' ','-')}">${escape(lead.stage)}</span></div></div>
+      <div><small style="color:var(--muted)">Score</small><div>${lead.score||0}</div></div>
+      <div><small style="color:var(--muted)">Owner</small><div>${escape(lead.ownerEmail||'')}</div></div>
+      <div><small style="color:var(--muted)">Source</small><div>${escape(lead.source||'')}</div></div>
+      <div><small style="color:var(--muted)">Phone</small><div>${escape(lead.phone||'—')}</div></div>
+      <div><small style="color:var(--muted)">Last touch</small><div>${slaCell(lead.lastContactedDate, state.config['sla.followUpDays'])}</div></div>
+    </div>
+    <div class="toolbar" style="margin-bottom:14px">
+      <select id="stageChange">
+        ${state.stages.map(function(s){return '<option '+(s===lead.stage?'selected':'')+' value="'+escape(s)+'">'+escape(s)+'</option>';}).join('')}
+      </select>
+      <button class="btn small primary" id="applyStage">Update stage</button>
+      <button class="btn small danger" id="deleteLead">Delete</button>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-head"><h3 style="font-size:18px">Add activity</h3></div>
+      <div style="padding:14px">
+        <div class="field"><label>Type</label>
+          <select id="actType"><option>note</option><option>call</option><option>email</option><option>meeting</option></select>
+        </div>
+        <div class="field"><label>Subject</label><input id="actSubject" placeholder="Short subject"/></div>
+        <div class="field"><label>Body</label><textarea id="actBody" rows="3" placeholder="What happened?"></textarea></div>
+        <button class="btn primary" id="saveActivity">Log activity</button>
+      </div>
+    </div>
+    <h4 style="font-family:'Instrument Serif',serif;font-size:20px;font-weight:400;margin:14px 0 10px">Timeline</h4>
+    <div id="timeline">${skeletonRows(3)}</div>
+  `;
+
+  body.querySelector('#applyStage').addEventListener('click', async function(){
+    const st = body.querySelector('#stageChange').value;
+    const r2 = await call('changeLeadStage', id, st);
+    if (r2.success) { cacheInvalidate('Leads'); state.cache.delete('kanban:all'); state.cache.delete('reports:v1'); toast('Stage updated'); openLead(id); }
+    else Swal.fire({icon:'error',title:'Failed',text:r2.error});
+  });
+  body.querySelector('#deleteLead').addEventListener('click', function(){ softDelete('Leads', id, lead.name); });
+  body.querySelector('#saveActivity').addEventListener('click', async function(){
+    const type = body.querySelector('#actType').value;
+    const subject = body.querySelector('#actSubject').value.trim();
+    const bodyText = body.querySelector('#actBody').value.trim();
+    if (!subject) { Swal.fire({icon:'warning',title:'Subject required'}); return; }
+    const r2 = await call('addActivity',{ type:type, subject:subject, body:bodyText, leadId:id });
+    if (r2.success) { toast('Activity logged'); openLead(id); }
+    else Swal.fire({icon:'error',title:'Failed',text:r2.error});
+  });
+
+  openPanel();
+  const t = await call('getActivitiesFor','Leads', id);
+  paintTimeline(t.success ? t.data : []);
+}
+
+async function openRecord(entity, id){
+  const r = await call('getRecord', entity, id);
+  if (!r.success || !r.data) { Swal.fire({icon:'error',title:'Not found'}); return; }
+  const rec = r.data;
+  document.getElementById('panelKind').textContent = entity.slice(0,-1).toUpperCase() + ' · #' + rec.id;
+  document.getElementById('panelTitle').textContent = rec.name || rec.title || 'Record';
+  document.getElementById('panelSub').textContent = rec.email || rec.industry || '';
+  const body = document.getElementById('panelBody');
+  body.innerHTML = '<div>' + Object.keys(rec).filter(function(k){return ['deleted'].indexOf(k)===-1;}).map(function(k){
+    return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><small style="color:var(--muted)">'+escape(k)+'</small><div>'+escape(String(rec[k]||'—'))+'</div></div>';
+  }).join('') + '</div><div style="margin-top:14px"><button class="btn danger" id="delRec">Delete</button></div><h4 style="font-family:\'Instrument Serif\',serif;font-size:20px;font-weight:400;margin:20px 0 8px">Timeline</h4><div id="timeline">'+skeletonRows(3)+'</div>';
+  body.querySelector('#delRec').addEventListener('click', function(){ softDelete(entity, id, rec.name || rec.title); });
+  openPanel();
+  const t = await call('getActivitiesFor', entity, id);
+  paintTimeline(t.success ? t.data : []);
+}
+
+function paintTimeline(items){
+  const el = document.getElementById('timeline');
+  if (!el) return;
+  if (!items.length) { el.innerHTML = '<div class="empty">No activity yet.</div>'; return; }
+  el.innerHTML = '<div class="timeline">' + items.map(function(a){
+    return '<div class="tl-item"><div class="meta">'+escape(a.type||'note')+' · '+formatDate(a.createdAt)+' · '+escape(a.createdBy||'')+'</div>' +
+           '<h6>'+escape(a.subject||'—')+'</h6>' +
+           '<div style="color:var(--muted);font-size:13px">'+escape(a.body||'')+'</div></div>';
+  }).join('') + '</div>';
+}
+
+// ============================================================
+// Create / import / delete-with-undo
+// ============================================================
+function openCreateModal(entity){
+  const fieldsByEntity = {
+    Leads: [
+      { k:'name', label:'Name', req:true },
+      { k:'email', label:'Email' },
+      { k:'phone', label:'Phone' },
+      { k:'company', label:'Company' },
+      { k:'source', label:'Source', type:'select', options: state.sources },
+      { k:'stage', label:'Stage', type:'select', options: state.stages },
+      { k:'score', label:'Score (0-100)', type:'number' },
+      { k:'ownerEmail', label:'Owner', type:'select', options: state.users.map(function(u){return u.email;}), placeholder:'Auto (round-robin)' }
+    ],
+    Contacts: [
+      { k:'name', label:'Name', req:true },
+      { k:'email', label:'Email' },
+      { k:'phone', label:'Phone' },
+      { k:'title', label:'Title' },
+      { k:'accountId', label:'Account ID (optional)', type:'number' },
+      { k:'ownerEmail', label:'Owner', type:'select', options: state.users.map(function(u){return u.email;}) }
+    ],
+    Accounts: [
+      { k:'name', label:'Name', req:true },
+      { k:'industry', label:'Industry' },
+      { k:'website', label:'Website' },
+      { k:'phone', label:'Phone' },
+      { k:'ownerEmail', label:'Owner', type:'select', options: state.users.map(function(u){return u.email;}) }
+    ],
+    Deals: [
+      { k:'title', label:'Title', req:true },
+      { k:'value', label:'Value (USD)', type:'number' },
+      { k:'probability', label:'Probability (%)', type:'number' },
+      { k:'expectedCloseDate', label:'Close date', type:'date' },
+      { k:'stage', label:'Stage', type:'select', options: state.stages },
+      { k:'leadId', label:'Lead ID', type:'number' },
+      { k:'ownerEmail', label:'Owner', type:'select', options: state.users.map(function(u){return u.email;}) }
+    ]
+  };
+  const fields = fieldsByEntity[entity];
+  const html = '<div style="text-align:left">' + fields.map(function(f){
+    if (f.type === 'select') {
+      const opts = ['<option value="">'+(f.placeholder||'Select…')+'</option>'].concat((f.options||[]).map(function(o){return '<option value="'+escape(o)+'">'+escape(o)+'</option>';})).join('');
+      return '<div class="field"><label>'+f.label+(f.req?' *':'')+'</label><select id="fld_'+f.k+'">'+opts+'</select></div>';
+    }
+    return '<div class="field"><label>'+f.label+(f.req?' *':'')+'</label><input id="fld_'+f.k+'" type="'+(f.type||'text')+'"/></div>';
+  }).join('') + '</div>';
+  Swal.fire({
+    title: 'New ' + entity.slice(0,-1),
+    html: html,
+    showCancelButton: true,
+    confirmButtonText: 'Create',
+    focusConfirm: false,
+    preConfirm: function(){
+      const out = {};
+      let missing = null;
+      fields.forEach(function(f){
+        const v = document.getElementById('fld_'+f.k).value;
+        if (f.req && !v) missing = f.label;
+        if (v !== '') out[f.k] = v;
+      });
+      if (missing) { Swal.showValidationMessage(missing + ' is required'); return false; }
+      return out;
+    }
+  }).then(async function(res){
+    if (!res.isConfirmed) return;
+    const map = { Leads:'createLead', Contacts:'createContact', Accounts:'createAccount', Deals:'createDeal' };
+    const r = await call(map[entity], res.value);
+    if (!r.success) { Swal.fire({icon:'error',title:'Failed',text:r.error}); return; }
+    cacheInvalidate(entity); state.cache.delete('kanban:all'); state.cache.delete('reports:v1');
+    toast(entity.slice(0,-1) + ' created');
+    render();
+  });
+}
+
+async function runImport(entity, text){
+  const parsed = parseCsv(text);
+  if (!parsed.rows.length) { Swal.fire({icon:'warning',title:'Empty CSV'}); return; }
+  // client-side validation
+  const seenEmails = new Set(), seenPhones = new Set();
+  // seed with currently visible rows if cached
+  state.cache.forEach(function(v,k){
+    if (k.indexOf(entity+':') === 0 && v.payload && v.payload.rows) {
+      v.payload.rows.forEach(function(r){ if (r.email) seenEmails.add(String(r.email).toLowerCase()); if (r.phone) seenPhones.add(String(r.phone).toLowerCase()); });
+    }
+  });
+  const errors = [];
+  parsed.rows.forEach(function(r,i){
+    if (!r.name) errors.push({ row:i+2, reason:'missing name' });
+    if (r.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email)) errors.push({ row:i+2, reason:'invalid email' });
+    if (r.email && seenEmails.has(r.email.toLowerCase())) errors.push({ row:i+2, reason:'duplicate email (in-file or existing)' });
+    if (r.phone && seenPhones.has(r.phone.toLowerCase())) errors.push({ row:i+2, reason:'duplicate phone (in-file or existing)' });
+    if (r.email) seenEmails.add(r.email.toLowerCase());
+    if (r.phone) seenPhones.add(r.phone.toLowerCase());
+  });
+
+  let errHtml = '';
+  if (errors.length) {
+    errHtml = '<div style="max-height:180px;overflow:auto;text-align:left;margin-top:10px;border:1px solid var(--border);border-radius:8px;padding:8px"><b>' + errors.length + ' issue(s) to review</b><br/>' +
+      errors.slice(0,20).map(function(e){return 'Row '+e.row+': '+escape(e.reason);}).join('<br/>') +
+      (errors.length>20 ? '<br/><i>…and '+(errors.length-20)+' more</i>' : '') + '</div>';
+  }
+
+  const confirm = await Swal.fire({
+    title: 'Import '+parsed.rows.length+' rows into '+entity+'?',
+    html: '<div>Detected columns: <span class="mono">' + parsed.headers.join(', ') + '</span></div>' + errHtml +
+          '<div class="progress" style="margin-top:14px"><div class="fill" id="impFill"></div></div>' +
+          '<div id="impStatus" style="color:var(--muted);font-size:12px">Ready.</div>',
+    showCancelButton: true,
+    confirmButtonText: 'Import ' + (parsed.rows.length - errors.filter(function(e){return e.reason.indexOf('duplicate')!==-1 || e.reason.indexOf('missing')!==-1;}).length) + ' valid',
+    didOpen: function(){
+      // fake progress while server writes
+      let p = 0;
+      const fill = document.getElementById('impFill');
+      window.__impTimer = setInterval(function(){ p = Math.min(90, p+7); fill.style.width = p+'%'; }, 120);
+    },
+    willClose: function(){ clearInterval(window.__impTimer); }
+  });
+  if (!confirm.isConfirmed) return;
+
+  const map = { Leads:'importLeads', Contacts:'importContacts', Accounts:'importAccounts' };
+  const r = await call(map[entity], parsed.rows);
+  if (!r.success) { Swal.fire({icon:'error',title:'Import failed',text:r.error}); return; }
+  cacheInvalidate(entity); state.cache.delete('kanban:all'); state.cache.delete('reports:v1');
+  const skippedCsv = r.data.skippedReasons && r.data.skippedReasons.length
+    ? 'row,reason\n' + r.data.skippedReasons.map(function(s){return s.row+',"'+s.reason.replace(/"/g,'""')+'"';}).join('\n')
+    : '';
+  Swal.fire({
+    icon: 'success',
+    title: 'Import complete',
+    html: '<div style="font-size:15px">Imported <b>'+r.data.imported+'</b> · Skipped <b>'+r.data.skipped+'</b></div>' +
+      (skippedCsv ? '<button class="btn small" id="dlSkipped" style="margin-top:10px">Download skipped CSV</button>' : ''),
+    didOpen: function(){
+      const b = document.getElementById('dlSkipped');
+      if (b) b.addEventListener('click', function(){ downloadCsv('skipped-import.csv', skippedCsv); });
+    }
+  });
+  render();
+}
+
+function softDelete(entity, id, label){
+  Swal.fire({
+    icon: 'warning',
+    title: 'Delete "'+ (label||'record') +'"?',
+    text: 'You can undo for 10 seconds.',
+    showCancelButton: true,
+    confirmButtonText: 'Delete'
+  }).then(async function(res){
+    if (!res.isConfirmed) return;
+    const del = { Leads:'deleteLead', Contacts:'deleteContact', Accounts:'deleteAccount', Deals:'deleteDeal' };
+    const r = await call(del[entity], id);
+    if (!r.success) { Swal.fire({icon:'error',title:'Failed',text:r.error}); return; }
+    cacheInvalidate(entity); state.cache.delete('kanban:all'); state.cache.delete('reports:v1');
+    closePanel();
+    showUndo(entity, id, label);
+    render();
+  });
+}
+
+function showUndo(entity, id, label){
+  const t = document.getElementById('undoToast');
+  document.getElementById('undoText').textContent = (label||'Record') + ' deleted';
+  t.classList.add('open');
+  clearTimeout(state._undoT);
+  const restore = { Leads:'restoreLead', Contacts:'restoreContact', Accounts:'restoreAccount', Deals:'restoreDeal' };
+  const btn = document.getElementById('undoBtn');
+  const handler = async function(){
+    btn.removeEventListener('click', handler);
+    const r = await call(restore[entity], id);
+    if (r.success) { cacheInvalidate(entity); state.cache.delete('kanban:all'); toast('Restored'); render(); }
+    t.classList.remove('open');
+  };
+  btn.addEventListener('click', handler);
+  state._undoT = setTimeout(function(){ t.classList.remove('open'); btn.removeEventListener('click', handler); }, 10000);
+}
+
+// ============================================================
+// CSV helpers
+// ============================================================
+function parseCsv(text){
+  const lines = text.replace(/\r/g,'').split('\n').filter(function(l){return l.trim().length;});
+  if (!lines.length) return { headers:[], rows:[] };
+  const headers = splitCsvLine(lines[0]);
+  const rows = lines.slice(1).map(function(l){
+    const cells = splitCsvLine(l);
+    const o = {};
+    headers.forEach(function(h,i){ o[h.trim()] = (cells[i]||'').trim(); });
+    return o;
+  });
+  return { headers:headers, rows:rows };
+}
+function splitCsvLine(line){
+  const out = []; let cur = ''; let q = false;
+  for (let i=0;i<line.length;i++){
+    const c = line[i];
+    if (q) {
+      if (c === '"' && line[i+1] === '"') { cur += '"'; i++; }
+      else if (c === '"') q = false;
+      else cur += c;
+    } else {
+      if (c === ',') { out.push(cur); cur = ''; }
+      else if (c === '"') q = true;
+      else cur += c;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+function downloadCsv(name, text){
+  const blob = new Blob([text], { type:'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+}
+function exportCurrent(entity){
+  const rows = [];
+  state.cache.forEach(function(v,k){ if (k.indexOf(entity+':')===0 && v.payload && v.payload.rows) rows.push.apply(rows, v.payload.rows); });
+  const seen = new Set(); const uniq = rows.filter(function(r){ if (seen.has(r.id)) return false; seen.add(r.id); return true; });
+  if (!uniq.length) { Swal.fire({icon:'info',title:'Nothing to export yet',text:'Load the list first, then export.'}); return; }
+  const cols = Object.keys(uniq[0]);
+  const csv = cols.join(',') + '\n' + uniq.map(function(r){
+    return cols.map(function(c){ const v = r[c]==null?'':String(r[c]); return '"'+v.replace(/"/g,'""')+'"'; }).join(',');
+  }).join('\n');
+  downloadCsv(entity.toLowerCase()+'-export.csv', csv);
+}
+
+// ============================================================
+// Small utilities
+// ============================================================
+function escape(v){ return String(v==null?'':v).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function formatDate(iso){
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return escape(iso);
+  return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+}
+function toast(msg){
+  Swal.fire({ toast:true, position:'top-end', icon:'success', title:msg, showConfirmButton:false, timer:1600, timerProgressBar:true });
+}
+</script>
+</body>
+</html>

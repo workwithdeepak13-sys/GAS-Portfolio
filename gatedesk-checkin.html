@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GateDesk · Visitor Check-In</title>
+<base target="_top">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+:root{--pri:#0B1220;--acc:#0EA5E9;--bg:#F5F7FA;--bd:#E2E8F0;--t1:#0F172A;--t2:#64748B;--danger:#E03E3E;--ok:#10B981}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:linear-gradient(160deg,#0B1220,#1E293B);min-height:100vh;color:var(--t1);padding:16px;display:flex;align-items:flex-start;justify-content:center}
+.wrap{width:100%;max-width:460px;margin-top:20px}
+.card{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 50px -12px rgba(0,0,0,.4)}
+.head{padding:26px 28px 20px;text-align:center;background:linear-gradient(180deg,#F8FAFC,#fff);border-bottom:1px solid var(--bd)}
+.head .logo{width:56px;height:56px;background:var(--pri);color:#fff;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px}
+.head h1{font-size:22px;font-weight:700}
+.head p{color:var(--t2);font-size:13px;margin-top:4px}
+.body{padding:24px 28px 28px}
+.fg{margin-bottom:15px}
+.fg label{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+.fg input,.fg select,.fg textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius:10px;background:var(--bg);font-family:inherit;font-size:15px;outline:none;transition:.15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--pri);background:#fff;box-shadow:0 0 0 3px rgba(11,18,32,.07)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cam{text-align:center;margin-bottom:15px}
+.cam video,.cam img{width:100%;max-width:260px;border-radius:14px;border:1.5px solid var(--bd);background:#000;aspect-ratio:4/3;object-fit:cover}
+.cam .btns{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.btn{padding:11px 16px;border:none;border-radius:10px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.btn.pri{background:var(--pri);color:#fff;width:100%;padding:14px;justify-content:center;font-size:16px}
+.btn.pri:hover{background:#020617}
+.btn.gh{background:#fff;color:var(--t1);border:1.5px solid var(--bd)}
+.btn.acc{background:var(--acc);color:#fff}
+.hint{font-size:12px;color:var(--t2);margin-top:-8px;margin-bottom:12px}
+.banner{display:none;background:#FEF3C7;color:#92400E;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px;text-align:center}
+.banner.show{display:block}
+.done{display:none;text-align:center;padding:20px 0}
+.done .big{width:72px;height:72px;border-radius:50%;background:#DCFCE7;color:#166534;display:inline-flex;align-items:center;justify-content:center;font-size:34px;margin-bottom:14px}
+.done h2{font-size:22px}.done p{color:var(--t2);margin-top:8px;font-size:14px}
+canvas{display:none}
+.foot{text-align:center;color:rgba(255,255,255,.55);font-size:12px;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="head">
+      <div class="logo">🛂</div>
+      <h1>Visitor Check-In</h1>
+      <p id="siteName">Please register your visit</p>
+    </div>
+    <div class="body">
+      <div class="banner" id="offlineBanner"></div>
+
+      <div id="formView">
+        <div class="fg"><label>Mobile Number *</label><input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile"></div>
+        <div class="hint" id="phoneHint"></div>
+        <div class="fg"><label>Full Name *</label><input id="name" placeholder="Your name"></div>
+        <div class="row2">
+          <div class="fg"><label>Company</label><input id="company" placeholder="Company"></div>
+          <div class="fg"><label>ID Proof (last 4)</label><input id="idProofLast4" maxlength="4" inputmode="numeric" placeholder="XXXX"></div>
+        </div>
+        <div class="fg"><label>Whom to Meet *</label><select id="hostId"><option value="">Select host…</option></select></div>
+        <div class="fg"><label>Purpose of Visit *</label><textarea id="purpose" rows="2" placeholder="e.g. Business meeting"></textarea></div>
+
+        <div class="cam">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;text-transform:uppercase;text-align:left">Photo</label>
+          <video id="video" autoplay playsinline muted></video>
+          <img id="snap" style="display:none">
+          <canvas id="canvas"></canvas>
+          <div class="btns">
+            <button class="btn gh" id="startCam" type="button">📷 Start Camera</button>
+            <button class="btn acc" id="capture" type="button" style="display:none">Capture</button>
+            <button class="btn gh" id="retake" type="button" style="display:none">Retake</button>
+          </div>
+        </div>
+
+        <button class="btn pri" id="submitBtn" type="button">Check In</button>
+      </div>
+
+      <div class="done" id="doneView">
+        <div class="big">✓</div>
+        <h2>You're registered!</h2>
+        <p id="doneMsg">Your host has been notified. Please wait for approval at the gate.</p>
+        <button class="btn pri" style="margin-top:18px" onclick="resetForm()" type="button">Register Another Visitor</button>
+      </div>
+    </div>
+  </div>
+  <div class="foot">Powered by GateDesk</div>
+</div>
+
+<script>
+const QUEUE_KEY = 'gatedesk_offline_queue';
+let photoBase64 = '';
+let stream = null;
+
+function gsr(fn, ...args){ return new Promise((res,rej)=>{ google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](...args); }); }
+
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const r = await gsr('bootstrapPublic');
+    if (r && r.success) {
+      document.getElementById('siteName').textContent = r.data.siteName || 'Please register your visit';
+      document.getElementById('hostId').innerHTML = '<option value="">Select host…</option>' +
+        r.data.hosts.map(h => `<option value="${h.id}">${escapeHtml(h.name)}${h.department?(' · '+escapeHtml(h.department)):''}</option>`).join('');
+    }
+  } catch(e){}
+  flushQueue();
+  updateOfflineBanner();
+});
+window.addEventListener('online', flushQueue);
+setInterval(flushQueue, 30000);
+
+/* Phone lookup → auto-fill returning visitors */
+document.getElementById('phone').addEventListener('blur', async () => {
+  const p = document.getElementById('phone').value.replace(/\D/g,'').slice(-10);
+  if (p.length < 10) return;
+  try {
+    const r = await gsr('lookupVisitorByPhone', p);
+    if (r && r.success && r.data) {
+      const v = r.data;
+      if (!document.getElementById('name').value) document.getElementById('name').value = v.name || '';
+      if (!document.getElementById('company').value) document.getElementById('company').value = v.company || '';
+      if (!document.getElementById('idProofLast4').value) document.getElementById('idProofLast4').value = v.idProofLast4 || '';
+      document.getElementById('phoneHint').textContent = '👋 Welcome back, ' + (v.name||'') + '! Details auto-filled — edit if needed.';
+    } else {
+      document.getElementById('phoneHint').textContent = '';
+    }
+  } catch(e){}
+});
+
+/* Camera */
+document.getElementById('startCam').addEventListener('click', async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false });
+    const v = document.getElementById('video'); v.srcObject = stream; v.style.display='block';
+    document.getElementById('snap').style.display='none';
+    document.getElementById('startCam').style.display='none';
+    document.getElementById('capture').style.display='inline-flex';
+    document.getElementById('retake').style.display='none';
+  } catch(e){ Swal.fire({ icon:'warning', title:'Camera unavailable', text:'You can continue without a photo.' }); }
+});
+document.getElementById('capture').addEventListener('click', () => {
+  const v = document.getElementById('video'), c = document.getElementById('canvas');
+  c.width = v.videoWidth || 320; c.height = v.videoHeight || 240;
+  c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+  photoBase64 = c.toDataURL('image/jpeg', 0.7);
+  const img = document.getElementById('snap'); img.src = photoBase64; img.style.display='block';
+  v.style.display='none';
+  document.getElementById('capture').style.display='none';
+  document.getElementById('retake').style.display='inline-flex';
+  stopCam();
+});
+document.getElementById('retake').addEventListener('click', () => { photoBase64=''; document.getElementById('startCam').click(); });
+function stopCam(){ if (stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } }
+
+/* Submit */
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  const payload = {
+    phone: document.getElementById('phone').value.replace(/\D/g,'').slice(-10),
+    name: document.getElementById('name').value.trim(),
+    company: document.getElementById('company').value.trim(),
+    idProofLast4: document.getElementById('idProofLast4').value.replace(/\D/g,'').slice(-4),
+    hostId: document.getElementById('hostId').value,
+    purpose: document.getElementById('purpose').value.trim(),
+    photoBase64: photoBase64
+  };
+  if (payload.phone.length < 10) return Swal.fire({ icon:'warning', title:'Enter a valid 10-digit mobile number' });
+  if (!payload.name) return Swal.fire({ icon:'warning', title:'Please enter your name' });
+  if (!payload.hostId) return Swal.fire({ icon:'warning', title:'Please select whom you are meeting' });
+  if (!payload.purpose) return Swal.fire({ icon:'warning', title:'Please enter the purpose of your visit' });
+
+  const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.textContent = 'Submitting…';
+  try {
+    const r = await gsr('submitCheckin', payload);
+    if (r && r.success) { showDone(); }
+    else { queueOffline(payload); Swal.fire({ icon:'info', title:'Saved offline', text:(r&&r.error)||'We could not reach the server. Your check-in is queued and will sync automatically.' }); showDone(true); }
+  } catch(e) {
+    queueOffline(payload);
+    Swal.fire({ icon:'info', title:'Saved offline', text:'No connection. Your check-in is queued and will sync automatically.' });
+    showDone(true);
+  } finally { btn.disabled=false; btn.textContent='Check In'; }
+});
+
+function showDone(queued){
+  stopCam();
+  document.getElementById('formView').style.display='none';
+  document.getElementById('doneView').style.display='block';
+  document.getElementById('doneMsg').textContent = queued
+    ? 'Saved on this device and will sync automatically once online. Please inform the guard.'
+    : 'Your host has been notified. Please wait for approval at the gate.';
+}
+function resetForm(){
+  ['phone','name','company','idProofLast4','purpose'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('hostId').value=''; document.getElementById('phoneHint').textContent='';
+  photoBase64=''; document.getElementById('snap').style.display='none';
+  document.getElementById('startCam').style.display='inline-flex';
+  document.getElementById('capture').style.display='none'; document.getElementById('retake').style.display='none';
+  document.getElementById('doneView').style.display='none';
+  document.getElementById('formView').style.display='block';
+}
+
+/* Offline queue */
+function readQueue(){ try { return JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]'); } catch(e){ return []; } }
+function writeQueue(q){ try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch(e){} }
+function queueOffline(payload){ const q = readQueue(); q.push({ payload:payload, ts:Date.now() }); writeQueue(q); updateOfflineBanner(); }
+async function flushQueue(){
+  const q = readQueue(); if (!q.length) return;
+  const remaining = [];
+  for (const item of q) {
+    try { const r = await gsr('submitCheckin', item.payload); if (!(r && r.success)) remaining.push(item); }
+    catch(e){ remaining.push(item); }
+  }
+  writeQueue(remaining); updateOfflineBanner();
+}
+function updateOfflineBanner(){
+  const n = readQueue().length; const b = document.getElementById('offlineBanner');
+  if (n > 0){ b.textContent = '⚠ Offline — ' + n + ' record(s) pending sync'; b.classList.add('show'); }
+  else b.classList.remove('show');
+}
+function escapeHtml(v){ return String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+</body>
+</html>

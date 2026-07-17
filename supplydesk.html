@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SupplyDesk</title>
+<base target="_top">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+:root{
+  --pri:#0B1220;--pri-d:#020617;--acc:#0EA5E9;--success:#10B981;--warning:#F59E0B;--danger:#E03E3E;--info:#3B82F6;--vio:#8B5CF6;
+  --t1:#0F172A;--t2:#64748B;--t3:#94A3B8;--bg2:#F5F7FA;--hover:#F1F5F9;--bd:#E2E8F0;
+  --shadow:0 4px 6px -1px rgba(0,0,0,.08);--shadow-lg:0 10px 25px -5px rgba(0,0,0,.1);--radius:12px;--radius-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg2);color:var(--t1);font-size:14px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;font-size:14px;outline:none}
+a{color:inherit;text-decoration:none}.hidden{display:none!important}
+#prog{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#0EA5E9,#3B82F6,#8B5CF6);z-index:9999;transition:width .35s,opacity .4s;box-shadow:0 0 8px rgba(59,130,246,.5)}
+#prog.done{opacity:0}
+@keyframes rowIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}tbody tr{animation:rowIn .3s ease both}
+.loader{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.shell{display:grid;grid-template-columns:246px 1fr;height:100vh}
+.sidebar{background:var(--pri);color:#fff;display:flex;flex-direction:column;overflow:hidden}
+.sb-brand{padding:20px 22px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-brand .logo{width:38px;height:38px;background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:17px;font-weight:700}
+.sb-brand h2{font-size:15px;font-weight:600}.sb-brand small{display:block;color:#94A3B8;font-size:11px}
+.sb-nav{flex:1;overflow-y:auto;padding:12px}
+.sb-section{margin-top:14px;padding:8px 10px 6px;font-size:10.5px;font-weight:600;color:#64748B;letter-spacing:1.2px;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:#CBD5E1;font-weight:500;font-size:13.5px;cursor:pointer;transition:.15s;margin-bottom:2px}
+.sb-item i{width:18px;text-align:center;font-size:14px;color:#94A3B8}
+.sb-item:hover{background:rgba(255,255,255,.06);color:#fff}.sb-item.active{background:rgba(255,255,255,.10);color:#fff}.sb-item.active i{color:#fff}
+.sb-item .badge{margin-left:auto;background:var(--danger);color:#fff;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.sb-user{padding:14px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px}
+.sb-user .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:600}
+.sb-user .un{flex:1;overflow:hidden}.sb-user .un b{display:block;font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sb-user .un span{color:#94A3B8;font-size:11px}
+.main{display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:#fff;border-bottom:1px solid var(--bd);padding:14px 28px;display:flex;align-items:center;gap:16px}
+.topbar h1{font-size:20px;font-weight:700}.topbar .sp{margin-left:auto;display:flex;align-items:center;gap:12px}
+.iconbtn{position:relative;width:38px;height:38px;border-radius:9px;border:1.5px solid var(--bd);display:inline-flex;align-items:center;justify-content:center;color:var(--t2)}.iconbtn:hover{background:var(--hover)}
+.iconbtn .badge{position:absolute;top:-5px;right:-5px;background:var(--danger);color:#fff;font-size:10px;border-radius:999px;padding:1px 6px;font-weight:700}
+.topbar-btn{padding:9px 14px;background:var(--pri);color:#fff;border-radius:8px;font-weight:500;font-size:13px;display:inline-flex;align-items:center;gap:7px}.topbar-btn:hover{background:var(--pri-d)}
+.content{flex:1;overflow-y:auto;padding:24px 28px 60px}.page{display:none}.page.active{display:block}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px;margin-bottom:24px}
+.stat{background:#fff;border-radius:var(--radius);padding:18px 20px;border:1px solid var(--bd);transition:.15s}.stat:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.stat .icon{width:38px;height:38px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;color:#fff;margin-bottom:12px}
+.stat.pri .icon{background:linear-gradient(135deg,#3B82F6,#6366F1)}.stat.suc .icon{background:linear-gradient(135deg,#10B981,#059669)}
+.stat.wrn .icon{background:linear-gradient(135deg,#F59E0B,#D97706)}.stat.dng .icon{background:linear-gradient(135deg,#EF4444,#DC2626)}
+.stat.acc .icon{background:linear-gradient(135deg,#0EA5E9,#0284C7)}.stat.vio .icon{background:linear-gradient(135deg,#8B5CF6,#7C3AED)}
+.stat .lbl{color:var(--t2);font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.4px}.stat .val{font-size:26px;font-weight:700;margin-top:4px}.stat .sub{color:var(--t3);font-size:11.5px;margin-top:4px}
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px}
+.card-hd{padding:14px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px}.card-hd h3{font-size:15px;font-weight:600}.card-hd .actions{margin-left:auto;display:flex;gap:8px}
+.card-bd{padding:16px 20px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}@media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+.tbl-wrap{overflow-x:auto}table.dt{width:100%;border-collapse:collapse}
+table.dt th,table.dt td{padding:11px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--bd);vertical-align:middle}
+table.dt th{background:var(--bg2);font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px}
+table.dt tbody tr:hover{background:var(--hover)}.num{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.pill.ok{background:#DCFCE7;color:#166534}.pill.warn{background:#FEF3C7;color:#92400E}.pill.bad{background:#FEE2E2;color:#991B1B}.pill.info{background:#DBEAFE;color:#1E40AF}.pill.gr{background:#F1F5F9;color:#475569}.pill.acc{background:#CFFAFE;color:#0C4A6E}.pill.vio{background:#EDE9FE;color:#5B21B6}
+.btn{padding:9px 14px;border-radius:8px;font-weight:500;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+.btn.pri{background:var(--pri);color:#fff}.btn.pri:hover{background:var(--pri-d)}.btn.suc{background:var(--success);color:#fff}.btn.suc:hover{background:#059669}
+.btn.dng{background:var(--danger);color:#fff}.btn.dng:hover{background:#B91C1C}.btn.acc{background:var(--acc);color:#fff}.btn.acc:hover{background:#0284C7}
+.btn.gh{background:#fff;color:var(--t1);border:1.5px solid var(--bd)}.btn.gh:hover{background:var(--hover)}.btn.sm{padding:6px 10px;font-size:12px}.btn.icon{width:32px;height:32px;padding:0;justify-content:center}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}.filters select,.filters input{padding:9px 12px;border:1.5px solid var(--bd);border-radius:8px;background:#fff;font-size:13px}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--bd);font-size:12px;color:var(--t2);flex-wrap:wrap}
+.pager button{padding:5px 11px;border:1px solid var(--bd);background:#fff;border-radius:6px;cursor:pointer;font-size:12px}.pager button:hover:not([disabled]){background:var(--hover)}.pager button[disabled]{opacity:.45;cursor:not-allowed}
+.mw{position:fixed;inset:0;background:rgba(11,18,32,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:24px;z-index:80}.mw.open{display:flex}
+.mw-inner{background:#fff;border-radius:16px;width:100%;max-width:640px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}.mw-inner.wide{max-width:900px}
+.mw-hd{padding:18px 24px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px}.mw-hd h3{font-size:17px;font-weight:600;flex:1}.mw-hd button{color:var(--t2);font-size:18px;padding:4px 8px;border-radius:6px}
+.mw-bd{padding:20px 24px;overflow-y:auto;flex:1}.mw-ft{padding:14px 24px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end}
+.fg{margin-bottom:15px}.fg label{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:8px;background:var(--bg2)}.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--pri);background:#fff}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.fg-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.empty{text-align:center;padding:44px 20px;color:var(--t3)}.empty i{font-size:36px;margin-bottom:12px;opacity:.5;display:block}
+.bar-row{display:flex;align-items:center;gap:12px;margin:8px 0}.bar-row .lbl{width:180px;font-size:12.5px;color:var(--t2)}.bar-row .bar-wrap{flex:1;background:var(--bg2);border-radius:999px;overflow:hidden;height:14px}.bar-row .bar{height:100%;background:linear-gradient(90deg,var(--acc),#0284C7);border-radius:999px;transition:width .8s}.bar-row .v{width:60px;text-align:right;font-weight:600;font-size:12.5px}
+.credit-bar{height:12px;background:var(--bg2);border-radius:999px;overflow:hidden;margin-top:6px}.credit-bar .fill{height:100%;border-radius:999px;transition:width .5s}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--pri);color:#fff;padding:12px 18px;border-radius:10px;font-size:13.5px;font-weight:500;box-shadow:var(--shadow-lg);display:none;z-index:200}
+.notif-pop{position:absolute;right:24px;top:60px;width:340px;background:#fff;border:1px solid var(--bd);border-radius:12px;box-shadow:var(--shadow-lg);z-index:60;display:none;overflow:hidden}.notif-pop.open{display:block}
+.notif-item{padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;gap:10px}.notif-item .dot{width:8px;height:8px;border-radius:50%;background:var(--warning);margin-top:6px;flex-shrink:0}
+.cart-line{display:grid;grid-template-columns:1fr 90px 110px 40px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sb-brand"><div class="logo"><i class="fas fa-truck-ramp-box"></i></div><div><h2>SupplyDesk</h2><small id="brandSub">B2B Supply Suite</small></div></div>
+    <nav class="sb-nav" id="sbNav"></nav>
+    <div class="sb-user"><div class="av" id="userAv">?</div><div class="un"><b id="userName">Loading…</b><span id="userRole"></span></div></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <h1 id="pageTitle">Dashboard</h1>
+      <div class="sp">
+        <button class="iconbtn" id="notifBtn"><i class="fas fa-bell"></i><span class="badge hidden" id="notifBadge">0</span></button>
+        <button class="topbar-btn" onclick="location.reload()"><i class="fas fa-rotate"></i><span>Refresh</span></button>
+      </div>
+      <div class="notif-pop" id="notifPop"></div>
+    </header>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<!-- Generic modal (built dynamically) -->
+<div class="mw" id="mw"><div class="mw-inner" id="mwInner">
+  <div class="mw-hd"><h3 id="mwTitle">—</h3><button onclick="closeM()"><i class="fas fa-xmark"></i></button></div>
+  <div class="mw-bd" id="mwBody"></div>
+  <div class="mw-ft" id="mwFoot"></div>
+</div></div>
+
+<div id="toast"></div>
+
+
+<script>
+/* ══════════ STATE ══════════ */
+const state = { me:null, config:{}, catalog:[], clients:[], sites:[], mySite:null, myClient:null, orderStatuses:[], view:'',
+  cache:new Map(), page:{}, size:{}, sort:{}, filters:{}, notifs:[] };
+function call(fn, ...args){
+  return new Promise(resolve => {
+    google.script.run.withSuccessHandler(r=>resolve(r||{success:false,error:'empty response'}))
+      .withFailureHandler(err=>resolve({success:false,error:err&&err.message?err.message:String(err)}))
+      [fn].apply(google.script.run, args);
+  });
+}
+if (typeof google === 'undefined' || !google.script || !google.script.run) {
+  window.google = { script:{ run:new Proxy({},{ get:()=>function(){ return { withSuccessHandler(cb){ setTimeout(()=>cb({success:false,error:'Not running inside Apps Script'}),0); return this; }, withFailureHandler(){ return this; } }; } }) } };
+}
+
+/* ══════════ NAV ══════════ */
+const NAV = {
+  Client: [ {p:'shop',i:'fa-cart-plus',t:'Place Order'}, {p:'myorders',i:'fa-box',t:'My Orders'}, {p:'myinvoices',i:'fa-file-invoice',t:'My Invoices'}, {p:'myledger',i:'fa-scale-balanced',t:'Credit & Ledger'} ],
+  Admin:  [ {p:'dashboard',i:'fa-gauge-high',t:'Dashboard'}, {p:'orders',i:'fa-box',t:'Orders'}, {p:'dispatch',i:'fa-dolly',t:'Consolidate & Dispatch'}, {p:'deliveries',i:'fa-truck-fast',t:'Deliveries'},
+            {p:'invoicing',i:'fa-file-invoice-dollar',t:'Invoicing'}, {p:'complaints',i:'fa-triangle-exclamation',t:'Complaints',badge:true}, {p:'demand',i:'fa-chart-line',t:'Demand Planner'},
+            {p:'catalog',i:'fa-tags',t:'Catalog'}, {p:'pricing',i:'fa-indian-rupee-sign',t:'Site Pricing'}, {p:'directory',i:'fa-building',t:'Clients & Sites'}, {p:'ledger',i:'fa-scale-balanced',t:'Credit & Ledger'}, {p:'config',i:'fa-gear',t:'Settings'} ]
+};
+const TITLES = { shop:'Place an Order', myorders:'My Orders', myinvoices:'My Invoices', myledger:'Credit & Ledger', dashboard:'Dashboard', orders:'All Orders', dispatch:'Consolidate & Dispatch', deliveries:'Deliveries', invoicing:'Invoicing', complaints:'Complaints', demand:'Demand Planner', catalog:'Catalog', pricing:'Site Pricing', directory:'Clients & Sites', ledger:'Credit & Ledger', config:'Settings' };
+
+/* ══════════ BOOT ══════════ */
+(async function boot(){
+  progStart();
+  const r = await call('bootstrap');
+  if (!r.success){ document.getElementById('content').innerHTML = setupNeeded(r.error); progDone(); return; }
+  const d = r.data;
+  state.me=d.me; state.config=d.config||{}; state.catalog=d.catalog||[]; state.clients=d.clients||[]; state.sites=d.sites||[];
+  state.mySite=d.mySite; state.myClient=d.myClient; state.orderStatuses=d.orderStatuses||[];
+  document.getElementById('userName').textContent = state.me.name || state.me.email;
+  document.getElementById('userRole').textContent = state.me.role + (state.mySite? (' · '+state.mySite.siteName):'');
+  document.getElementById('userAv').textContent = (state.me.name||state.me.email||'?').charAt(0).toUpperCase();
+  document.getElementById('brandSub').textContent = state.me.role==='Admin' ? 'Ops Console' : 'Client Console';
+  buildNav();
+  navigateTo((NAV[state.me.role]||NAV.Client)[0].p);
+  if (state.me.role==='Admin'){ loadNotifs(); setInterval(loadNotifs, 60000); }
+  progDone();
+})();
+function setupNeeded(err){ return '<div class="empty"><i class="fas fa-triangle-exclamation"></i><p>Run <b>⚙️ SupplyDesk → Initialize System</b> from the spreadsheet menu first.</p><p style="font-size:12px;margin-top:8px">'+esc(err||'')+'</p></div>'; }
+function buildNav(){
+  const items = NAV[state.me.role]||NAV.Client;
+  document.getElementById('sbNav').innerHTML = '<div class="sb-section">'+esc(state.me.role)+' Console</div>' +
+    items.map(n=>`<div class="sb-item" data-page="${n.p}"><i class="fas ${n.i}"></i>${n.t}${n.badge?'<span class="badge hidden" data-badge="'+n.p+'">0</span>':''}</div>`).join('');
+  document.getElementById('sbNav').addEventListener('click', e=>{ const it=e.target.closest('.sb-item'); if(it) navigateTo(it.dataset.page); });
+}
+function navigateTo(page){ state.view=page; document.querySelectorAll('.sb-item').forEach(x=>x.classList.toggle('active',x.dataset.page===page)); document.getElementById('pageTitle').textContent=TITLES[page]||page; render(); }
+
+/* ══════════ NOTIFICATIONS (Admin: open complaints + credit warnings) ══════════ */
+async function loadNotifs(){
+  const [c, dash] = await Promise.all([ call('listComplaints'), call('getAdminDashboard') ]);
+  const open = (c.data||[]).filter(x=>x.status==='Open');
+  const overLimit = dash.success ? (dash.data.clientsOverLimit||0) : 0;
+  state.notifs = open.map(x=>({ title:'Open complaint', body:(x.itemName||'')+' — '+(x.reason||''), kind:'complaint' }));
+  if (overLimit) state.notifs.unshift({ title:'Credit limit breached', body:overLimit+' client(s) over their credit limit', kind:'credit' });
+  const b=document.getElementById('notifBadge');
+  if (state.notifs.length){ b.textContent=state.notifs.length; b.classList.remove('hidden'); } else b.classList.add('hidden');
+  document.querySelectorAll('[data-badge="complaints"]').forEach(el=>{ if(open.length){ el.textContent=open.length; el.classList.remove('hidden'); } else el.classList.add('hidden'); });
+}
+document.getElementById('notifBtn').addEventListener('click', ()=>{
+  const p=document.getElementById('notifPop'); p.classList.toggle('open');
+  if (!p.classList.contains('open')) return;
+  p.innerHTML = state.notifs.length ? state.notifs.map(n=>`<div class="notif-item"><span class="dot" style="background:${n.kind==='credit'?'#E03E3E':'#F59E0B'}"></span><div><div style="font-weight:600">${esc(n.title)}</div><small style="color:var(--t2)">${esc(n.body)}</small></div></div>`).join('') : '<div class="empty" style="padding:26px"><i class="fas fa-check"></i>Nothing to flag.</div>';
+});
+document.addEventListener('click', e=>{ const p=document.getElementById('notifPop'); if(!p.contains(e.target)&&!document.getElementById('notifBtn').contains(e.target)) p.classList.remove('open'); });
+
+/* ══════════ PAGINATION ══════════ */
+function pg(entity){ if(!state.page[entity]) state.page[entity]=1; if(!state.size[entity]) state.size[entity]=25; if(!state.sort[entity]) state.sort[entity]={key:'createdAt',dir:'desc'}; if(!state.filters[entity]) state.filters[entity]={}; }
+function cacheKey(e){ const s=state.sort[e]; return e+':'+JSON.stringify(state.filters[e])+':'+s.key+'-'+s.dir+':'+state.page[e]+':'+state.size[e]; }
+function cacheGet(k){ const v=state.cache.get(k); if(!v) return null; if(Date.now()-v.ts>60000){ state.cache.delete(k); return null; } return v.data; }
+function cachePut(k,d){ state.cache.set(k,{data:d,ts:Date.now()}); }
+function cacheInvalidate(e){ if(!e){ state.cache.clear(); return; } Array.from(state.cache.keys()).filter(k=>k.indexOf(e+':')===0).forEach(k=>state.cache.delete(k)); }
+async function fetchPage(entity){
+  pg(entity); const key=cacheKey(entity); const c=cacheGet(key); if(c){ prefetch(entity); return c; }
+  const s=state.sort[entity];
+  const r=await call('getPagedData', entity, state.page[entity], state.size[entity], state.filters[entity], s.key, s.dir);
+  if(!r.success) return {rows:[],total:0,page:1,pageSize:state.size[entity]};
+  cachePut(key,r.data); prefetch(entity); return r.data;
+}
+async function prefetch(entity){ const np=state.page[entity]+1; const s=state.sort[entity]; const key=entity+':'+JSON.stringify(state.filters[entity])+':'+s.key+'-'+s.dir+':'+np+':'+state.size[entity]; if(cacheGet(key)) return; const r=await call('getPagedData',entity,np,state.size[entity],state.filters[entity],s.key,s.dir); if(r.success&&r.data.rows.length) cachePut(key,r.data); }
+function pagerHtml(entity,data){ const tp=Math.max(1,Math.ceil(data.total/data.pageSize)); const from=data.total?(data.page-1)*data.pageSize+1:0,to=Math.min(data.total,data.page*data.pageSize);
+  return `<div class="pager"><div>Showing <b>${from}</b>–<b>${to}</b> of <b>${data.total}</b></div><div style="display:flex;gap:6px;align-items:center">
+    <select onchange="setSize('${entity}',this.value)">${[10,20,25,50,100].map(n=>`<option ${n===data.pageSize?'selected':''}>${n}</option>`).join('')}</select>
+    <button onclick="goPage('${entity}',1)" ${data.page<=1?'disabled':''}>«</button><button onclick="goPage('${entity}',${data.page-1})" ${data.page<=1?'disabled':''}>‹</button>
+    <span><b>${data.page}</b> / ${tp}</span><button onclick="goPage('${entity}',${data.page+1})" ${data.page>=tp?'disabled':''}>›</button><button onclick="goPage('${entity}',${tp})" ${data.page>=tp?'disabled':''}>»</button></div></div>`; }
+function goPage(e,n){ state.page[e]=Math.max(1,n); render(); }
+function setSize(e,n){ state.size[e]=Number(n); state.page[e]=1; render(); }
+
+/* ══════════ HELPERS ══════════ */
+function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function inr(n){ return '₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2}); }
+function fmtDate(v){ if(!v) return '—'; try{ return new Date(v).toISOString().split('T')[0]; }catch(e){ return v; } }
+function fmtTime(v){ if(!v) return '—'; try{ const d=new Date(v); return d.toISOString().split('T')[0]+' '+d.toTimeString().slice(0,5); }catch(e){ return v; } }
+function progStart(){ const b=document.getElementById('prog'); b.classList.remove('done'); b.style.width='25%'; setTimeout(()=>b.style.width='70%',200); }
+function progDone(){ const b=document.getElementById('prog'); b.style.width='100%'; setTimeout(()=>b.classList.add('done'),250); setTimeout(()=>b.style.width='0',700); }
+function toast(msg,ms=2600){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._to); t._to=setTimeout(()=>t.style.display='none',ms); }
+function openM(title, bodyHtml, footHtml, wide){ document.getElementById('mwTitle').textContent=title; document.getElementById('mwBody').innerHTML=bodyHtml; document.getElementById('mwFoot').innerHTML=footHtml||''; document.getElementById('mwInner').classList.toggle('wide',!!wide); document.getElementById('mw').classList.add('open'); }
+function closeM(){ document.getElementById('mw').classList.remove('open'); }
+document.getElementById('mw').addEventListener('click', e=>{ if(e.target.id==='mw') closeM(); });
+function orderPill(s){ const m={'Placed':'warn','Consolidated':'info','Dispatched':'acc','Delivered':'ok','Cancelled':'bad'}; return `<span class="pill ${m[s]||'gr'}">${esc(s)}</span>`; }
+function complaintPill(s){ const m={'Open':'warn','Resolved':'ok','Expired':'bad'}; return `<span class="pill ${m[s]||'gr'}">${esc(s)}</span>`; }
+function itemName(id){ const c=state.catalog.find(x=>String(x.id)===String(id)); return c?c.itemName:('#'+id); }
+function download(filename, text, mime){ const blob=new Blob([text],{type:(mime||'text/plain')+';charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
+</script>
+
+
+<script>
+/* ══════════ RENDER DISPATCHER ══════════ */
+function render(){
+  const el=document.getElementById('content');
+  const map={ shop:renderShop, myorders:renderMyOrders, myinvoices:renderMyInvoices, myledger:renderLedgerSelf,
+    dashboard:renderDashboard, orders:renderOrders, dispatch:renderDispatch, deliveries:renderDeliveries, invoicing:renderInvoicing,
+    complaints:renderComplaints, demand:renderDemand, catalog:renderCatalog, pricing:renderPricing, directory:renderDirectory, ledger:renderLedgerAdmin, config:renderConfig };
+  (map[state.view]||(()=>{ el.innerHTML=''; }))(el);
+}
+
+/* ══════════ CLIENT: PLACE ORDER ══════════ */
+let cart = [];
+async function renderShop(el){
+  if (!state.mySite){ el.innerHTML='<div class="empty"><i class="fas fa-store-slash"></i>No site is linked to your login. Contact your administrator.</div>'; return; }
+  el.innerHTML = `<div id="creditBox"></div>
+    <div class="grid-2">
+      <div class="card"><div class="card-hd"><h3>Catalog · ${esc(state.mySite.siteName)}</h3></div><div class="tbl-wrap"><table class="dt" id="priceTbl"><thead><tr><th>Item</th><th>UOM</th><th class="num">Rate</th><th class="num">GST%</th><th></th></tr></thead><tbody></tbody></table></div></div>
+      <div class="card"><div class="card-hd"><h3>Your Order</h3><div class="actions"><span class="pill acc" id="cartCount">0 items</span></div></div><div class="card-bd" id="cartBox"></div></div>
+    </div>`;
+  const [pl, credit] = await Promise.all([ call('getPriceListForSite', state.mySite.id), call('getClientCredit', state.mySite.clientId) ]);
+  window._priceList = pl.data||[];
+  document.getElementById('priceTbl').querySelector('tbody').innerHTML = (pl.data||[]).map(p=>`<tr>
+    <td><b>${esc(p.itemName)}</b><div style="color:var(--t3);font-size:11px">${esc(p.sku)}</div></td><td>${esc(p.uom)}</td>
+    <td class="num">${inr(p.rate)}</td><td class="num">${p.gstRatePct}%</td>
+    <td><button class="btn sm gh" onclick="addToCart(${p.itemId})"><i class="fas fa-plus"></i>Add</button></td></tr>`).join('') || '<tr><td colspan="5" class="empty">No items</td></tr>';
+  renderCreditBox('creditBox', credit.data);
+  renderCart();
+}
+function renderCreditBox(elId, c){
+  if (!c){ document.getElementById(elId).innerHTML=''; return; }
+  const pct = c.creditLimit>0 ? Math.min(100, Math.round(c.outstanding/c.creditLimit*100)) : 0;
+  const color = pct>=100?'#E03E3E':pct>=80?'#F59E0B':'#10B981';
+  document.getElementById(elId).innerHTML = `<div class="card"><div class="card-bd">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><b>Credit Limit</b> ${inr(c.creditLimit)}</div><div>Outstanding <b style="color:${color}">${inr(c.outstanding)}</b></div><div>Available <b>${inr(c.available)}</b></div></div>
+    <div class="credit-bar"><div class="fill" style="width:${pct}%;background:${color}"></div></div>
+  </div></div>`;
+}
+function addToCart(itemId){
+  const p = (window._priceList||[]).find(x=>String(x.itemId)===String(itemId)); if(!p) return;
+  const ex = cart.find(c=>String(c.itemId)===String(itemId));
+  if (ex) ex.qtyOrdered += 1; else cart.push({ itemId:p.itemId, itemName:p.itemName, uom:p.uom, rate:p.rate, qtyOrdered:1 });
+  renderCart();
+}
+function renderCart(){
+  const box=document.getElementById('cartBox'); if(!box) return;
+  document.getElementById('cartCount').textContent = cart.length+' items';
+  if (!cart.length){ box.innerHTML='<div class="empty"><i class="fas fa-cart-shopping"></i>Add items from the catalog</div>'; return; }
+  let total=0;
+  box.innerHTML = cart.map((c,i)=>{ const amt=c.qtyOrdered*c.rate; total+=amt; return `<div class="cart-line">
+    <div><b>${esc(c.itemName)}</b><div style="color:var(--t3);font-size:11px">${inr(c.rate)}/${esc(c.uom)}</div></div>
+    <input type="number" min="1" value="${c.qtyOrdered}" onchange="setQty(${i},this.value)" style="padding:6px 8px;border:1.5px solid var(--bd);border-radius:6px">
+    <div class="num">${inr(amt)}</div>
+    <button class="btn sm dng icon" onclick="removeCart(${i})"><i class="fas fa-trash"></i></button></div>`; }).join('') +
+    `<div style="display:flex;justify-content:space-between;padding:12px 0 4px;font-size:16px"><b>Estimated Total</b><b>${inr(total)}</b></div>
+     <div style="color:var(--t3);font-size:11px;margin-bottom:12px">Taxes are applied at invoicing based on place of supply.</div>
+     <button class="btn pri" style="width:100%;justify-content:center" onclick="submitOrder()"><i class="fas fa-paper-plane"></i>Place Order</button>`;
+}
+function setQty(i,v){ cart[i].qtyOrdered=Math.max(1,Number(v)||1); renderCart(); }
+function removeCart(i){ cart.splice(i,1); renderCart(); }
+async function submitOrder(){
+  if (!cart.length) return;
+  const r = await call('placeOrder', { siteId:state.mySite.id, lines: cart.map(c=>({ itemId:c.itemId, qtyOrdered:c.qtyOrdered })) });
+  if (r.success){ Swal.fire({icon:'success',title:'Order placed',text:'Estimated value '+inr(r.data.estValue)}); cart=[]; cacheInvalidate('Orders'); renderShop(document.getElementById('content')); }
+  else Swal.fire({icon:'error',title:'Order blocked',text:r.error});
+}
+
+/* ══════════ CLIENT: MY ORDERS ══════════ */
+async function renderMyOrders(el){
+  el.innerHTML = `<div class="card"><div class="tbl-wrap"><table class="dt" id="oTbl"><thead><tr><th>Order</th><th>Site</th><th>Status</th><th class="num">Est. Value</th><th>Placed</th><th></th></tr></thead><tbody></tbody></table></div><div id="oPager"></div></div>`;
+  const data = await fetchPage('Orders');
+  document.getElementById('oTbl').querySelector('tbody').innerHTML = (data.rows||[]).map(o=>`<tr>
+    <td><b>#${o.id}</b> · ${o.lineCount} lines</td><td>${esc(o.siteName)}</td><td>${orderPill(o.status)}</td><td class="num">${inr(o.estValue)}</td><td>${fmtDate(o.createdAt)}</td>
+    <td><button class="btn sm gh" onclick="viewOrder('${o.id}')"><i class="fas fa-eye"></i>View</button>${o.status==='Delivered'?`<button class="btn sm acc" onclick="openComplaint('${o.id}')"><i class="fas fa-triangle-exclamation"></i>Issue</button>`:''}${o.status==='Placed'?`<button class="btn sm dng" onclick="doCancelOrder('${o.id}')">Cancel</button>`:''}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">No orders yet</td></tr>';
+  document.getElementById('oPager').innerHTML = pagerHtml('Orders', data);
+}
+async function viewOrder(id){
+  const r = await call('getOrderDetail', id); if(!r.success){ Swal.fire({icon:'error',title:'Error',text:r.error}); return; }
+  const d=r.data;
+  openM('Order #'+id+' · '+esc(d.site.siteName),
+    `<table class="dt"><thead><tr><th>Item</th><th class="num">Ordered</th><th class="num">Delivered</th><th class="num">Damaged</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>`+
+    d.lines.map(l=>`<tr><td>${esc(l.itemName)}</td><td class="num">${l.qtyOrdered}</td><td class="num">${l.qtyDelivered||'—'}</td><td class="num">${l.damagedQty||0}</td><td class="num">${inr(l.rate)}</td><td class="num">${inr(l.amount)}</td></tr>`).join('')+
+    `</tbody></table><div style="text-align:right;margin-top:12px;font-size:16px"><b>Total ${inr(d.total)}</b></div>`, '', true);
+}
+async function doCancelOrder(id){ const c=await Swal.fire({title:'Cancel this order?',icon:'warning',showCancelButton:true,confirmButtonText:'Cancel Order',confirmButtonColor:'#dc2626'}); if(!c.isConfirmed) return; const r=await call('cancelOrder',id); if(r.success){ toast('Order cancelled'); cacheInvalidate('Orders'); render(); } else Swal.fire({icon:'error',title:'Failed',text:r.error}); }
+
+/* ══════════ CLIENT: MY INVOICES ══════════ */
+async function renderMyInvoices(el){
+  el.innerHTML = `<div class="card"><div class="tbl-wrap"><table class="dt" id="iTbl"><thead><tr><th>Invoice</th><th>Date</th><th class="num">Subtotal</th><th class="num">Tax</th><th class="num">Total</th><th></th></tr></thead><tbody></tbody></table></div><div id="iPager"></div></div>`;
+  const data = await fetchPage('Invoices');
+  document.getElementById('iTbl').querySelector('tbody').innerHTML = (data.rows||[]).map(i=>`<tr>
+    <td><b>INV-${i.id}</b></td><td>${fmtDate(i.invoiceDate)}</td><td class="num">${inr(i.subtotal)}</td><td class="num">${inr(Number(i.cgst)+Number(i.sgst)+Number(i.igst))}</td><td class="num"><b>${inr(i.total)}</b></td>
+    <td><button class="btn sm gh" onclick="viewInvoice('${i.id}')"><i class="fas fa-eye"></i>View</button></td></tr>`).join('') || '<tr><td colspan="6" class="empty">No invoices yet</td></tr>';
+  document.getElementById('iPager').innerHTML = pagerHtml('Invoices', data);
+}
+async function viewInvoice(id){
+  const r = await call('getInvoiceDetail', id); if(!r.success){ Swal.fire({icon:'error',title:'Error',text:r.error}); return; }
+  const d=r.data, inv=d.invoice;
+  const taxMode = Number(inv.igst)>0 ? 'IGST (inter-state)' : 'CGST + SGST (intra-state)';
+  const body = `<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      <div><div style="color:var(--t2);font-size:12px">Billed To</div><b>${esc(d.client.name||'')}</b><div style="font-size:12px;color:var(--t2)">${esc(d.site.siteName||'')} · ${esc(d.site.state||'')}</div><div style="font-size:12px;color:var(--t2)">GSTIN ${esc(d.client.gstin||'—')}</div></div>
+      <div style="text-align:right"><div style="color:var(--t2);font-size:12px">Invoice</div><b>INV-${inv.id}</b><div style="font-size:12px;color:var(--t2)">${fmtDate(inv.invoiceDate)}</div><div class="pill ${inv.tallyExported===true||String(inv.tallyExported)==='true'?'ok':'gr'}" style="margin-top:4px">${inv.tallyExported===true||String(inv.tallyExported)==='true'?'Tally Exported':'Not Exported'}</div></div></div>
+    <table class="dt"><thead><tr><th>Item</th><th>HSN</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">GST%</th><th class="num">Amount</th></tr></thead><tbody>`+
+    d.lines.map(l=>`<tr><td>${esc(l.itemName)}</td><td>${esc(l.hsnCode)}</td><td class="num">${l.qty}</td><td class="num">${inr(l.rate)}</td><td class="num">${l.gstRatePct}%</td><td class="num">${inr(l.amount)}</td></tr>`).join('')+
+    `</tbody></table>
+    <div style="margin-top:12px;max-width:280px;margin-left:auto;font-size:13px">
+      <div style="display:flex;justify-content:space-between;padding:3px 0"><span>Subtotal</span><b>${inr(inv.subtotal)}</b></div>
+      ${Number(inv.cgst)>0?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span>CGST</span><b>${inr(inv.cgst)}</b></div><div style="display:flex;justify-content:space-between;padding:3px 0"><span>SGST</span><b>${inr(inv.sgst)}</b></div>`:''}
+      ${Number(inv.igst)>0?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span>IGST</span><b>${inr(inv.igst)}</b></div>`:''}
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bd);font-size:16px"><b>Total</b><b>${inr(inv.total)}</b></div>
+      <div style="color:var(--t3);font-size:11px;text-align:right">${taxMode}</div>
+    </div>`;
+  const foot = state.me.role==='Admin' ? `<button class="btn gh" onclick="closeM()">Close</button><button class="btn pri" onclick="exportTally('${inv.id}')"><i class="fas fa-file-code"></i>Export Tally XML</button>` : `<button class="btn gh" onclick="closeM()">Close</button>`;
+  openM('Invoice INV-'+inv.id, body, foot, true);
+}
+async function exportTally(id){
+  const r = await call('exportInvoiceTallyXml', id);
+  if (!r.success){ Swal.fire({icon:'error',title:'Export failed',text:r.error}); return; }
+  download(r.data.filename, r.data.xml, 'application/xml');
+  toast('Tally XML downloaded'); cacheInvalidate('Invoices');
+  if (state.view==='invoicing') render();
+}
+
+/* ══════════ CLIENT: RAISE COMPLAINT (24h window) ══════════ */
+async function openComplaint(orderId){
+  const r = await call('getComplaintableLines', orderId);
+  if (!r.success){ Swal.fire({icon:'error',title:'Cannot raise issue',text:r.error}); return; }
+  const d=r.data;
+  if (!d.withinWindow){ Swal.fire({icon:'warning',title:'Window closed',html:'The '+d.windowHours+'-hour complaint window closed on <b>'+fmtTime(d.deadline)+'</b>.'}); return; }
+  const body = `<div style="margin-bottom:12px;font-size:13px;color:var(--t2)">Complaint window open until <b style="color:var(--t1)">${fmtTime(d.deadline)}</b>. Select the affected line:</div>`+
+    d.lines.map(l=>`<label style="display:flex;gap:10px;align-items:center;padding:10px;border:1.5px solid var(--bd);border-radius:8px;margin-bottom:8px;cursor:${l.hasComplaint?'not-allowed':'pointer'};opacity:${l.hasComplaint?.5:1}">
+      <input type="radio" name="clLine" value="${l.id}" ${l.hasComplaint?'disabled':''}>
+      <div style="flex:1"><b>${esc(l.itemName)}</b><div style="font-size:12px;color:var(--t2)">Ordered ${l.qtyOrdered} · Delivered ${l.qtyDelivered||0} · Damaged ${l.damagedQty||0}${l.hasComplaint?' · '+l.complaintStatus:''}</div></div>
+    </label>`).join('')+
+    `<div class="fg" style="margin-top:8px"><label>Reason</label><textarea id="clReason" rows="2" placeholder="Describe the issue"></textarea></div>`;
+  openM('Raise an Issue · Order #'+orderId, body, `<button class="btn gh" onclick="closeM()">Cancel</button><button class="btn acc" onclick="submitComplaint()"><i class="fas fa-paper-plane"></i>Submit</button>`, false);
+}
+async function submitComplaint(){
+  const sel = document.querySelector('input[name="clLine"]:checked'); if(!sel){ Swal.fire({icon:'warning',title:'Select a line'}); return; }
+  const reason = document.getElementById('clReason').value.trim();
+  const r = await call('raiseComplaint', sel.value, reason);
+  if (r.success){ closeM(); Swal.fire({icon:'success',title:'Issue raised',html: r.data.damagedQty>0 ? ('A credit note of <b>'+inr(r.data.proposedCreditAmount)+'</b> has been proposed for '+r.data.damagedQty+' damaged unit(s), pending admin confirmation.') : 'Your issue has been logged for admin review.'}); cacheInvalidate('Orders'); }
+  else Swal.fire({icon:'error',title:'Failed',text:r.error});
+}
+
+/* ══════════ CLIENT: LEDGER (self) ══════════ */
+async function renderLedgerSelf(el){
+  if (!state.myClient){ el.innerHTML='<div class="empty"><i class="fas fa-scale-balanced"></i>No client linked to your login.</div>'; return; }
+  renderLedgerFor(el, state.myClient.id, false);
+}
+async function renderLedgerFor(el, clientId, isAdmin){
+  el.innerHTML = '<div id="ledCredit"></div><div class="grid-2"><div class="card"><div class="card-hd"><h3>Invoices</h3></div><div class="tbl-wrap"><table class="dt" id="ledInv"><thead><tr><th>Invoice</th><th>Date</th><th class="num">Total</th></tr></thead><tbody></tbody></table></div></div><div class="card"><div class="card-hd"><h3>Payments & Credit Notes</h3>'+(isAdmin?'<div class="actions"><button class="btn pri sm" onclick="openRecordPayment(\''+clientId+'\')"><i class="fas fa-plus"></i>Record Payment</button></div>':'')+'</div><div class="tbl-wrap"><table class="dt" id="ledPay"><thead><tr><th>Type</th><th>Reference</th><th class="num">Amount</th><th>Date</th></tr></thead><tbody></tbody></table></div></div></div>';
+  const r = await call('getClientLedger', clientId);
+  if (!r.success){ el.innerHTML='<div class="empty">'+esc(r.error)+'</div>'; return; }
+  renderCreditBox('ledCredit', r.data.credit);
+  document.getElementById('ledInv').querySelector('tbody').innerHTML = (r.data.invoices||[]).map(i=>`<tr><td><b>INV-${i.id}</b></td><td>${fmtDate(i.invoiceDate)}</td><td class="num">${inr(i.total)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">No invoices</td></tr>';
+  document.getElementById('ledPay').querySelector('tbody').innerHTML = (r.data.payments||[]).map(p=>`<tr><td><span class="pill ${p.type==='CreditNote'?'vio':p.type==='Debit'?'bad':'ok'}">${esc(p.type)}</span></td><td>${esc(p.reference||'')}</td><td class="num">${inr(p.amount)}</td><td>${fmtDate(p.createdAt)}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">No entries</td></tr>';
+}
+</script>
+
+
+<script>
+/* ══════════ ADMIN: DASHBOARD ══════════ */
+async function renderDashboard(el){
+  el.innerHTML = '<div class="stats-grid" id="dStats"></div><div class="grid-2"><div class="card"><div class="card-hd"><h3>Open Complaints</h3></div><div class="card-bd" id="dComp"></div></div><div class="card"><div class="card-hd"><h3>Top Demand (trailing window)</h3></div><div class="card-bd" id="dDemand"></div></div></div>';
+  const [d, comp, dem] = await Promise.all([ call('getAdminDashboard'), call('listComplaints'), call('getDemandPlan') ]);
+  const s=d.data||{};
+  const cards=[
+    {icon:'fa-box',klass:'wrn',lbl:'Orders Placed',val:s.placed||0,sub:'awaiting dispatch'},
+    {icon:'fa-truck-fast',klass:'acc',lbl:'Dispatched',val:s.dispatched||0},
+    {icon:'fa-circle-check',klass:'suc',lbl:'Delivered',val:s.delivered||0},
+    {icon:'fa-file-invoice-dollar',klass:'pri',lbl:'Invoiced Value',val:inr(s.invoicedValue),sub:(s.invoices||0)+' invoices'},
+    {icon:'fa-triangle-exclamation',klass:'dng',lbl:'Open Complaints',val:s.openComplaints||0},
+    {icon:'fa-scale-balanced',klass:'vio',lbl:'Total Outstanding',val:inr(s.totalOutstanding),sub:(s.clientsOverLimit||0)+' over limit'}
+  ];
+  document.getElementById('dStats').innerHTML = cards.map(x=>`<div class="stat ${x.klass}"><div class="icon"><i class="fas ${x.icon}"></i></div><div class="lbl">${x.lbl}</div><div class="val">${x.val}</div><div class="sub">${x.sub||''}</div></div>`).join('');
+  const open=(comp.data||[]).filter(c=>c.status==='Open');
+  document.getElementById('dComp').innerHTML = open.length ? open.slice(0,6).map(c=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)"><div><b>${esc(c.itemName)}</b><div style="font-size:12px;color:var(--t2)">${esc(c.reason||'')}</div></div><button class="btn sm suc" onclick="openResolve('${c.id}',${c.damagedQty||0})">Resolve</button></div>`).join('') : '<div class="empty"><i class="fas fa-check"></i>No open complaints</div>';
+  const items=(dem.data&&dem.data.items||[]).slice(0,6); const max=Math.max.apply(null,items.map(i=>i.totalQty).concat([1]));
+  document.getElementById('dDemand').innerHTML = items.length ? items.map(i=>`<div class="bar-row"><div class="lbl">${esc(i.itemName)}</div><div class="bar-wrap"><div class="bar" style="width:${Math.round(i.totalQty/max*100)}%"></div></div><div class="v">${i.totalQty}</div></div>`).join('') : '<div class="empty"><i class="fas fa-chart-simple"></i>No recent orders</div>';
+}
+
+/* ══════════ ADMIN: ORDERS ══════════ */
+async function renderOrders(el){
+  el.innerHTML = `<div class="filters"><select id="ofStatus" onchange="setFilter('Orders','status',this.value)"><option value="">All Status</option>${state.orderStatuses.map(s=>`<option ${(state.filters.Orders&&state.filters.Orders.status)===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="card"><div class="tbl-wrap"><table class="dt" id="oTbl"><thead><tr><th>Order</th><th>Site</th><th>State</th><th>Status</th><th class="num">Est. Value</th><th>Placed</th><th></th></tr></thead><tbody></tbody></table></div><div id="oPager"></div></div>`;
+  const data = await fetchPage('Orders');
+  document.getElementById('oTbl').querySelector('tbody').innerHTML = (data.rows||[]).map(o=>`<tr>
+    <td><b>#${o.id}</b> · ${o.lineCount} lines</td><td>${esc(o.siteName)}</td><td>${esc(o.siteState)}</td><td>${orderPill(o.status)}</td><td class="num">${inr(o.estValue)}</td><td>${fmtDate(o.createdAt)}</td>
+    <td><button class="btn sm gh" onclick="viewOrder('${o.id}')"><i class="fas fa-eye"></i></button></td></tr>`).join('') || '<tr><td colspan="7" class="empty">No orders</td></tr>';
+  document.getElementById('oPager').innerHTML = pagerHtml('Orders', data);
+}
+function setFilter(entity,key,val){ pg(entity); state.filters[entity][key]=val; state.page[entity]=1; cacheInvalidate(entity); render(); }
+
+/* ══════════ ADMIN: CONSOLIDATE & DISPATCH ══════════ */
+async function renderDispatch(el){
+  el.innerHTML = '<div id="dispList"><div class="empty"><div class="loader" style="border-color:#cbd5e1;border-top-color:#0B1220"></div></div></div>';
+  const r = await call('getConsolidationPlan');
+  const groups = r.data||[];
+  document.getElementById('dispList').innerHTML = groups.length ? groups.map(g=>`<div class="card"><div class="card-bd" style="display:flex;align-items:center;gap:14px">
+    <div style="flex:1"><b style="font-size:15px">${esc(g.siteName)}</b><div style="color:var(--t2);font-size:12.5px">${g.orders.length} placed order(s): #${g.orderIds.join(', #')}</div></div>
+    <input type="date" id="dd_${g.siteId}" value="${new Date().toISOString().split('T')[0]}" style="padding:8px;border:1.5px solid var(--bd);border-radius:8px">
+    <button class="btn pri" onclick="doConsolidate('${g.siteId}')"><i class="fas fa-dolly"></i>Consolidate & Dispatch</button>
+  </div></div>`).join('') : '<div class="empty" style="background:#fff;border-radius:12px;padding:60px 20px"><i class="fas fa-dolly"></i>No placed orders waiting to be dispatched.</div>';
+}
+async function doConsolidate(siteId){
+  const date = document.getElementById('dd_'+siteId).value;
+  const r = await call('consolidateAndDispatch', siteId, date);
+  if (r.success){ toast('Dispatched '+r.data.orders+' order(s) as one delivery'); cacheInvalidate('Orders'); render(); } else Swal.fire({icon:'error',title:'Failed',text:r.error});
+}
+
+/* ══════════ ADMIN: DELIVERIES (reconcile) ══════════ */
+async function renderDeliveries(el){
+  el.innerHTML = `<div class="card"><div class="tbl-wrap"><table class="dt" id="delTbl"><thead><tr><th>Delivery</th><th>Site</th><th>Date</th><th>Orders</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>`;
+  const r = await call('listDeliveries');
+  document.getElementById('delTbl').querySelector('tbody').innerHTML = (r.data||[]).map(d=>`<tr>
+    <td><b>DEL-${d.id}</b></td><td>${esc(d.siteName)}</td><td>${fmtDate(d.deliveryDate)}</td><td>#${esc(String(d.orderIds))}</td><td>${orderPill(d.status)}</td>
+    <td>${d.status!=='Delivered'?`<button class="btn sm suc" onclick="openReconcile('${d.id}')"><i class="fas fa-clipboard-check"></i>Reconcile</button>`:'<span class="pill ok">Reconciled</span>'}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">No deliveries</td></tr>';
+}
+async function openReconcile(deliveryId){
+  const r = await call('getDeliveryDetail', deliveryId); if(!r.success){ Swal.fire({icon:'error',title:'Error',text:r.error}); return; }
+  const lines = r.data.lines;
+  const body = `<div style="font-size:12.5px;color:var(--t2);margin-bottom:10px">Capture what actually arrived. Damaged units feed the auto credit-note proposal when a client raises an issue.</div>
+    <table class="dt"><thead><tr><th>Item</th><th class="num">Ordered</th><th class="num">Delivered</th><th class="num">Damaged</th></tr></thead><tbody>`+
+    lines.map(l=>`<tr><td>${esc(l.itemName)}</td><td class="num">${l.qtyOrdered}</td>
+      <td class="num"><input id="dv_${l.id}" type="number" min="0" value="${l.qtyDelivered!==''&&l.qtyDelivered!=null?l.qtyDelivered:l.qtyOrdered}" style="width:80px;padding:6px;border:1.5px solid var(--bd);border-radius:6px;text-align:right"></td>
+      <td class="num"><input id="dm_${l.id}" type="number" min="0" value="${l.damagedQty||0}" style="width:80px;padding:6px;border:1.5px solid var(--bd);border-radius:6px;text-align:right"></td></tr>`).join('')+
+    `</tbody></table>`;
+  window._recLines = lines.map(l=>l.id);
+  openM('Reconcile Delivery DEL-'+deliveryId, body, `<button class="btn gh" onclick="closeM()">Cancel</button><button class="btn suc" onclick="submitReconcile('${deliveryId}')"><i class="fas fa-check"></i>Confirm Delivery</button>`, true);
+}
+async function submitReconcile(deliveryId){
+  const updates = (window._recLines||[]).map(id=>({ orderLineId:id, qtyDelivered:Number(document.getElementById('dv_'+id).value||0), damagedQty:Number(document.getElementById('dm_'+id).value||0) }));
+  const r = await call('confirmDelivery', deliveryId, updates);
+  if (r.success){ closeM(); toast('Delivery reconciled ✓'); cacheInvalidate('Orders'); render(); } else Swal.fire({icon:'error',title:'Failed',text:r.error});
+}
+
+/* ══════════ ADMIN: INVOICING ══════════ */
+async function renderInvoicing(el){
+  el.innerHTML = `<div class="card"><div class="card-hd"><h3>Delivered orders ready to invoice</h3></div><div class="tbl-wrap"><table class="dt" id="invReady"><thead><tr><th>Order</th><th>Site</th><th>Place of Supply</th><th class="num">Lines</th><th></th></tr></thead><tbody></tbody></table></div></div>
+    <div class="card"><div class="card-hd"><h3>Generated Invoices</h3></div><div class="tbl-wrap"><table class="dt" id="invList"><thead><tr><th>Invoice</th><th>Client</th><th>Site</th><th class="num">Total</th><th>Tally</th><th></th></tr></thead><tbody></tbody></table></div><div id="invPager"></div></div>`;
+  const ready = await call('getInvoiceableOrders');
+  const homeState = String(state.config['seller.homeState']||'');
+  document.getElementById('invReady').querySelector('tbody').innerHTML = (ready.data||[]).map(o=>{ const mode = String(o.state).toLowerCase()===homeState.toLowerCase()?'CGST+SGST':'IGST'; return `<tr>
+    <td><b>#${o.orderId}</b></td><td>${esc(o.siteName)}</td><td>${esc(o.state)} <span class="pill ${mode==='IGST'?'info':'ok'}">${mode}</span></td><td class="num">${o.uninvoicedLines}</td>
+    <td><button class="btn sm pri" onclick="doGenerateInvoice('${o.orderId}')"><i class="fas fa-file-invoice-dollar"></i>Generate</button></td></tr>`; }).join('') || '<tr><td colspan="5" class="empty">Nothing pending — deliver & reconcile orders first</td></tr>';
+  const data = await fetchPage('Invoices');
+  document.getElementById('invList').querySelector('tbody').innerHTML = (data.rows||[]).map(i=>`<tr>
+    <td><b>INV-${i.id}</b></td><td>${esc(i.clientName)}</td><td>${esc(i.siteName)}</td><td class="num">${inr(i.total)}</td>
+    <td><span class="pill ${i.tallyExported===true||String(i.tallyExported)==='true'?'ok':'gr'}">${i.tallyExported===true||String(i.tallyExported)==='true'?'Exported':'Pending'}</span></td>
+    <td><button class="btn sm gh" onclick="viewInvoice('${i.id}')"><i class="fas fa-eye"></i></button><button class="btn sm acc" onclick="exportTally('${i.id}')"><i class="fas fa-file-code"></i>Tally</button></td></tr>`).join('') || '<tr><td colspan="6" class="empty">No invoices yet</td></tr>';
+  document.getElementById('invPager').innerHTML = pagerHtml('Invoices', data);
+}
+async function doGenerateInvoice(orderId){
+  const r = await call('generateInvoice', orderId);
+  if (r.success){ Swal.fire({icon:'success',title:'Invoice generated',html:'INV-'+r.data.invoiceId+' · '+inr(r.data.total)+'<br><span style="font-size:12px;color:#64748b">Tax mode: '+r.data.taxMode+'</span>'}); cacheInvalidate('Invoices'); render(); }
+  else Swal.fire({icon:'error',title:'Failed',text:r.error});
+}
+
+/* ══════════ ADMIN: COMPLAINTS ══════════ */
+async function renderComplaints(el){
+  el.innerHTML = `<div class="card"><div class="tbl-wrap"><table class="dt" id="cTbl"><thead><tr><th>ID</th><th>Item</th><th class="num">Damaged</th><th>Reason</th><th>Raised</th><th>Deadline</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>`;
+  const r = await call('listComplaints');
+  document.getElementById('cTbl').querySelector('tbody').innerHTML = (r.data||[]).map(c=>`<tr>
+    <td><b>#${c.id}</b></td><td>${esc(c.itemName)}</td><td class="num">${c.damagedQty||0}</td><td>${esc((c.reason||'').slice(0,40))}</td><td>${fmtTime(c.raisedAt)}</td><td>${fmtTime(c.deadline)}</td><td>${complaintPill(c.status)}</td>
+    <td>${c.status==='Open'?`<button class="btn sm suc" onclick="openResolve('${c.id}',${c.damagedQty||0})"><i class="fas fa-file-invoice"></i>Credit Note</button>`:''}</td></tr>`).join('') || '<tr><td colspan="8" class="empty">No complaints</td></tr>';
+}
+async function openResolve(complaintId, damagedQty){
+  openM('Issue Credit Note · Complaint #'+complaintId,
+    `<div class="fg"><label>Credit Note Amount (₹)</label><input id="cnAmt" type="number" min="0" step="0.01" placeholder="Proposed for ${damagedQty} damaged unit(s)"></div>
+     <div style="font-size:12px;color:var(--t2)">This posts a CreditNote to the client's ledger, reducing their outstanding balance, and marks the complaint Resolved.</div>`,
+    `<button class="btn gh" onclick="closeM()">Cancel</button><button class="btn suc" onclick="submitResolve('${complaintId}')"><i class="fas fa-check"></i>Issue Credit Note</button>`, false);
+}
+async function submitResolve(complaintId){
+  const amt = Number(document.getElementById('cnAmt').value||0);
+  if (amt<=0){ Swal.fire({icon:'warning',title:'Enter an amount'}); return; }
+  const r = await call('resolveComplaintWithCreditNote', complaintId, amt);
+  if (r.success){ closeM(); toast('Credit note CN-'+r.data.creditNoteId+' issued ('+inr(r.data.amount)+')'); cacheInvalidate('Complaints'); loadNotifs(); render(); }
+  else Swal.fire({icon:'error',title:'Failed',text:r.error});
+}
+
+/* ══════════ ADMIN: DEMAND PLANNER ══════════ */
+async function renderDemand(el){
+  const r = await call('getDemandPlan'); const d=r.data||{items:[],windowDays:30};
+  const max=Math.max.apply(null,d.items.map(i=>i.totalQty).concat([1]));
+  el.innerHTML = `<div class="card"><div class="card-hd"><h3>Demand over trailing ${d.windowDays} days</h3></div><div class="card-bd">${d.items.length?d.items.map(i=>`<div class="bar-row"><div class="lbl">${esc(i.itemName)}</div><div class="bar-wrap"><div class="bar" style="width:${Math.round(i.totalQty/max*100)}%"></div></div><div class="v">${i.totalQty} ${esc(i.uom||'')}</div></div>`).join(''):'<div class="empty"><i class="fas fa-chart-simple"></i>No orders in the window</div>'}</div></div>
+    <div class="card"><div class="tbl-wrap"><table class="dt"><thead><tr><th>Item</th><th class="num">Total Ordered</th><th class="num">Orders</th><th class="num">Avg / Order</th></tr></thead><tbody>${d.items.map(i=>`<tr><td>${esc(i.itemName)}</td><td class="num">${i.totalQty}</td><td class="num">${i.orderCount}</td><td class="num">${i.avgPerOrder}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">No data</td></tr>'}</tbody></table></div></div>`;
+}
+
+/* ══════════ ADMIN: CATALOG ══════════ */
+async function renderCatalog(el){
+  el.innerHTML = `<div class="card"><div class="card-hd"><h3>Catalog</h3><div class="actions"><button class="btn pri sm" onclick="openCatalog()"><i class="fas fa-plus"></i>New Item</button></div></div>
+    <div class="tbl-wrap"><table class="dt" id="catTbl"><thead><tr><th>Item</th><th>SKU</th><th>UOM</th><th class="num">Default Rate</th><th>HSN</th><th class="num">GST%</th><th></th></tr></thead><tbody></tbody></table></div></div>`;
+  const r = await call('listCatalog'); state.catalog = r.data||state.catalog;
+  document.getElementById('catTbl').querySelector('tbody').innerHTML = (r.data||[]).map(c=>`<tr>
+    <td><b>${esc(c.itemName)}</b></td><td>${esc(c.sku)}</td><td>${esc(c.uom)}</td><td class="num">${inr(c.defaultRate)}</td><td>${esc(c.hsnCode)}</td><td class="num">${c.gstRatePct}%</td>
+    <td><button class="btn sm gh icon" onclick='openCatalog(${JSON.stringify(c)})'><i class="fas fa-pen"></i></button></td></tr>`).join('') || '<tr><td colspan="7" class="empty">No items</td></tr>';
+}
+function openCatalog(c){
+  c=c||{};
+  openM(c.id?'Edit Item':'New Item',
+    `<div class="fg"><label>Item Name *</label><input id="ci_itemName" value="${esc(c.itemName||'')}"></div>
+     <div class="fg-row"><div class="fg"><label>SKU</label><input id="ci_sku" value="${esc(c.sku||'')}"></div><div class="fg"><label>UOM</label><input id="ci_uom" value="${esc(c.uom||'')}" placeholder="Piece / Box / Kg"></div></div>
+     <div class="fg-row-3"><div class="fg"><label>Default Rate</label><input id="ci_defaultRate" type="number" value="${esc(c.defaultRate||'')}"></div><div class="fg"><label>HSN Code</label><input id="ci_hsnCode" value="${esc(c.hsnCode||'')}"></div><div class="fg"><label>GST %</label><input id="ci_gstRatePct" type="number" value="${esc(c.gstRatePct||'')}"></div></div>`,
+    `<button class="btn gh" onclick="closeM()">Cancel</button><button class="btn pri" onclick="saveCatalog('${c.id||''}')">Save</button>`, false);
+}
+async function saveCatalog(id){
+  const p = { itemName:val('ci_itemName'), sku:val('ci_sku'), uom:val('ci_uom'), defaultRate:Number(val('ci_defaultRate')||0), hsnCode:val('ci_hsnCode'), gstRatePct:Number(val('ci_gstRatePct')||0) };
+  if (id) p.id=id;
+  if (!p.itemName){ Swal.fire({icon:'warning',title:'Item name required'}); return; }
+  const r = await call('saveCatalogItem', p);
+  if (r.success){ closeM(); toast('Saved ✓'); cacheInvalidate('Catalog'); render(); } else Swal.fire({icon:'error',title:'Failed',text:r.error});
+}
+function val(id){ return document.getElementById(id).value.trim(); }
+
+/* ══════════ ADMIN: SITE PRICING ══════════ */
+async function renderPricing(el){
+  const sites = state.sites.length?state.sites:(await call('listSites')).data||[];
+  state.sites = sites;
+  el.innerHTML = `<div class="filters"><label style="font-weight:600;color:var(--t2)">Site</label><select id="prSite" onchange="loadPricingGrid()">${sites.map(s=>`<option value="${s.id}">${esc(s.siteName)}</option>`).join('')}</select></div>
+    <div class="card"><div class="card-hd"><h3>Site-wise Pricing</h3><div class="actions"><span style="font-size:12px;color:var(--t2)">Blank override = uses catalog default</span></div></div>
+    <div class="tbl-wrap"><table class="dt" id="prTbl"><thead><tr><th>Item</th><th class="num">Default Rate</th><th class="num">Override Rate</th><th></th></tr></thead><tbody></tbody></table></div></div>`;
+  loadPricingGrid();
+}
+async function loadPricingGrid(){
+  const siteId = document.getElementById('prSite').value;
+  const r = await call('getSitePricingGrid', siteId);
+  document.getElementById('prTbl').querySelector('tbody').innerHTML = (r.data||[]).map(p=>`<tr>
+    <td><b>${esc(p.itemName)}</b><div style="color:var(--t3);font-size:11px">${esc(p.sku)}</div></td>
+    <td class="num">${inr(p.defaultRate)}</td>
+    <td class="num"><input id="pr_${p.itemId}" type="number" value="${p.overrideRate!==''&&p.overrideRate!=null?p.overrideRate:''}" placeholder="—" style="width:110px;padding:6px;border:1.5px solid var(--bd);border-radius:6px;text-align:right"></td>
+    <td><button class="btn sm pri" onclick="savePrice('${siteId}','${p.itemId}')">Save</button></td></tr>`).join('') || '<tr><td colspan="4" class="empty">No items</td></tr>';
+}
+async function savePrice(siteId, itemId){
+  const v = document.getElementById('pr_'+itemId).value;
+  const r = await call('setSitePrice', siteId, itemId, v===''?'':Number(v));
+  if (r.success){ toast('Price saved ✓'); cacheInvalidate('Orders'); } else Swal.fire({icon:'error',title:'Failed',text:r.error});
+}
+
+/* ══════════ ADMIN: CLIENTS & SITES ══════════ */
+async function renderDirectory(el){
+  el.innerHTML = `<div class="card"><div class="card-hd"><h3>Clients</h3><div class="actions"><button class="btn pri sm" onclick="openClient()"><i class="fas fa-plus"></i>New Client</button></div></div>
+    <div class="tbl-wrap"><table class="dt" id="clTbl"><thead><tr><th>Name</th><th>GSTIN</th><th>Home State</th><th class="num">Credit Limit</th><th></th></tr></thead><tbody></tbody></table></div></div>
+    <div class="card"><div class="card-hd"><h3>Sites</h3><div class="actions"><button class="btn pri sm" onclick="openSite()"><i class="fas fa-plus"></i>New Site</button></div></div>
+    <div class="tbl-wrap"><table class="dt" id="siTbl"><thead><tr><th>Site</th><th>Client</th><th>State</th><th>Contact</th><th></th></tr></thead><tbody></tbody></table></div></div>`;
+  const [cl, si] = await Promise.all([ call('listClients'), call('listSites') ]);
+  state.clients = cl.data||[]; state.sites = si.data||[];
+  const cById={}; state.clients.forEach(c=>cById[String(c.id)]=c);
+  document.getElementById('clTbl').querySelector('tbody').innerHTML = state.clients.map(c=>`<tr><td><b>${esc(c.name)}</b></td><td>${esc(c.gstin)}</td><td>${esc(c.homeState)}</td><td class="num">${inr(c.creditLimit)}</td><td><button class="btn sm gh icon" onclick='openClient(${JSON.stringify(c)})'><i class="fas fa-pen"></i></button></td></tr>`).join('') || '<tr><td colspan="5" class="empty">No clients</td></tr>';
+  document.getElementById('siTbl').querySelector('tbody').innerHTML = state.sites.map(s=>`<tr><td><b>${esc(s.siteName)}</b></td><td>${esc((cById[String(s.clientId)]||{}).name||'')}</td><td>${esc(s.state)}</td><td>${esc(s.contactPerson||'')}${s.contactPhone?(' · '+esc(s.contactPhone)):''}</td><td><button class="btn sm gh icon" onclick='openSite(${JSON.stringify(s)})'><i class="fas fa-pen"></i></button></td></tr>`).join('') || '<tr><td colspan="5" class="empty">No sites</td></tr>';
+}
+function openClient(c){ c=c||{}; openM(c.id?'Edit Client':'New Client',
+  `<div class="fg"><label>Name *</label><input id="cl_name" value="${esc(c.name||'')}"></div><div class="fg-row"><div class="fg"><label>GSTIN</label><input id="cl_gstin" value="${esc(c.gstin||'')}"></div><div class="fg"><label>Home State</label><input id="cl_homeState" value="${esc(c.homeState||'')}"></div></div><div class="fg"><label>Credit Limit (₹)</label><input id="cl_creditLimit" type="number" value="${esc(c.creditLimit||'')}"></div>`,
+  `<button class="btn gh" onclick="closeM()">Cancel</button><button class="btn pri" onclick="saveClient('${c.id||''}')">Save</button>`, false); }
+async function saveClient(id){ const p={ name:val('cl_name'), gstin:val('cl_gstin'), homeState:val('cl_homeState'), creditLimit:Number(val('cl_creditLimit')||0) }; if(id)p.id=id; if(!p.name){ Swal.fire({icon:'warning',title:'Name required'}); return; } const r=await call('saveClient',p); if(r.success){ closeM(); toast('Client saved ✓'); render(); } else Swal.fire({icon:'error',title:'Failed',text:r.error}); }
+function openSite(s){ s=s||{}; const opts=state.clients.map(c=>`<option value="${c.id}" ${String(s.clientId)===String(c.id)?'selected':''}>${esc(c.name)}</option>`).join('');
+  openM(s.id?'Edit Site':'New Site',
+  `<div class="fg-row"><div class="fg"><label>Client *</label><select id="si_clientId">${opts}</select></div><div class="fg"><label>Site Name *</label><input id="si_siteName" value="${esc(s.siteName||'')}"></div></div><div class="fg"><label>Address</label><input id="si_address" value="${esc(s.address||'')}"></div><div class="fg-row-3"><div class="fg"><label>State</label><input id="si_state" value="${esc(s.state||'')}"></div><div class="fg"><label>Contact</label><input id="si_contactPerson" value="${esc(s.contactPerson||'')}"></div><div class="fg"><label>Phone</label><input id="si_contactPhone" value="${esc(s.contactPhone||'')}"></div></div>`,
+  `<button class="btn gh" onclick="closeM()">Cancel</button><button class="btn pri" onclick="saveSite('${s.id||''}')">Save</button>`, false); }
+async function saveSite(id){ const p={ clientId:document.getElementById('si_clientId').value, siteName:val('si_siteName'), address:val('si_address'), state:val('si_state'), contactPerson:val('si_contactPerson'), contactPhone:val('si_contactPhone') }; if(id)p.id=id; if(!p.siteName){ Swal.fire({icon:'warning',title:'Site name required'}); return; } const r=await call('saveSite',p); if(r.success){ closeM(); toast('Site saved ✓'); render(); } else Swal.fire({icon:'error',title:'Failed',text:r.error}); }
+
+/* ══════════ ADMIN: LEDGER ══════════ */
+async function renderLedgerAdmin(el){
+  const clients = state.clients.length?state.clients:(await call('listClients')).data||[]; state.clients=clients;
+  el.innerHTML = `<div class="filters"><label style="font-weight:600;color:var(--t2)">Client</label><select id="ledClient" onchange="reloadLedger()">${clients.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div><div id="ledHost"></div>`;
+  reloadLedger();
+}
+function reloadLedger(){ const id=document.getElementById('ledClient').value; renderLedgerFor(document.getElementById('ledHost'), id, true); }
+function openRecordPayment(clientId){
+  openM('Record Payment', `<div class="fg"><label>Amount (₹)</label><input id="pay_amt" type="number" min="0" step="0.01"></div><div class="fg"><label>Reference</label><input id="pay_ref" placeholder="NEFT / cheque no."></div>`,
+    `<button class="btn gh" onclick="closeM()">Cancel</button><button class="btn pri" onclick="submitPayment('${clientId}')">Record</button>`, false);
+}
+async function submitPayment(clientId){
+  const amt=Number(val('pay_amt')||0); if(amt<=0){ Swal.fire({icon:'warning',title:'Enter an amount'}); return; }
+  const r = await call('recordPayment', clientId, amt, val('pay_ref'));
+  if (r.success){ closeM(); toast('Payment recorded ✓'); cacheInvalidate('Invoices'); reloadLedger(); loadNotifs(); } else Swal.fire({icon:'error',title:'Failed',text:r.error});
+}
+
+/* ══════════ ADMIN: CONFIG ══════════ */
+function renderConfig(el){
+  const rows = Object.keys(state.config).sort().map(k=>`<div class="fg-row" style="align-items:end;border-bottom:1px solid var(--bd);padding-bottom:12px;margin-bottom:12px"><div class="fg" style="margin:0"><label>${esc(k)}</label></div><div class="fg" style="margin:0;display:flex;gap:8px"><input id="cfg_${esc(k)}" value="${esc(state.config[k])}"><button class="btn pri sm" onclick="saveCfg('${esc(k)}')">Save</button></div></div>`).join('');
+  el.innerHTML = `<div class="card"><div class="card-hd"><h3>System Settings</h3></div><div class="card-bd">${rows||'<div class="empty">No config</div>'}</div></div>`;
+}
+async function saveCfg(key){ const v=document.getElementById('cfg_'+key).value; const r=await call('updateConfig',key,v); if(r.success){ state.config[key]=v; toast('Saved ✓'); } else Swal.fire({icon:'error',title:'Failed',text:r.error}); }
+</script>
+</body>
+</html>

@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense & Reimbursement</title>
+<base target="_top">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{
+  --primary:#0F172A;--primary-dark:#020617;--primary-light:#F1F5F9;--accent:#0EA5E9;
+  --success:#10B981;--warning:#F59E0B;--danger:#E03E3E;--info:#3B82F6;
+  --text-1:#0F172A;--text-2:#64748B;--text-3:#94A3B8;
+  --bg-1:#FFFFFF;--bg-2:#F8FAFC;--bg-hover:#F1F5F9;--border:#E2E8F0;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.05);--shadow:0 4px 6px -1px rgba(0,0,0,.08);
+  --shadow-lg:0 10px 25px -5px rgba(0,0,0,.1);
+  --radius:12px;--radius-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg-2);color:var(--text-1);font-size:14px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;font-size:14px;outline:none}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,#0F172A 0%,#1E293B 100%);display:flex;align-items:center;justify-content:center;padding:24px;z-index:100}
+.login-wrap{width:100%;max-width:420px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:var(--shadow-lg)}
+.login-head{padding:36px 32px 20px;text-align:center;background:linear-gradient(180deg,#F8FAFC 0%,#fff 100%);border-bottom:1px solid var(--border)}
+.login-head .logo{width:56px;height:56px;background:var(--primary);color:#fff;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px}
+.login-head h1{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.login-head p{color:var(--text-2);font-size:13px;margin-top:6px}
+.login-body{padding:28px 32px 32px}
+.login-body .fg{margin-bottom:16px}
+.login-body label{display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;letter-spacing:.3px;text-transform:uppercase}
+.login-body input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-2);transition:all .15s}
+.login-body input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(15,23,42,.08)}
+.login-btn{width:100%;padding:13px;background:var(--primary);color:#fff;border-radius:var(--radius-sm);font-weight:600;letter-spacing:.3px;transition:all .15s;margin-top:8px}
+.login-btn:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.login-help{margin-top:16px;padding:12px 14px;background:var(--bg-2);border-radius:var(--radius-sm);font-size:12px;color:var(--text-2)}
+.login-help b{color:var(--text-1)}
+.login-err{background:#FEE2E2;color:#991B1B;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none}
+
+/* APP SHELL */
+#app{display:none;height:100vh;overflow:hidden}
+.shell{display:grid;grid-template-columns:240px 1fr;height:100vh}
+.sidebar{background:var(--primary);color:#fff;display:flex;flex-direction:column;overflow:hidden}
+.sb-brand{padding:20px 22px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-brand .logo{width:36px;height:36px;background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
+.sb-brand h2{font-size:15px;font-weight:600}
+.sb-brand small{display:block;color:#94A3B8;font-size:11px;font-weight:400}
+.sb-nav{flex:1;overflow-y:auto;padding:12px 12px 24px}
+.sb-nav::-webkit-scrollbar{width:6px}
+.sb-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+.sb-section{margin-top:16px;padding:8px 10px 6px;font-size:10.5px;font-weight:600;color:#64748B;letter-spacing:1.2px;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:#CBD5E1;font-weight:500;font-size:13.5px;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.sb-item i{width:18px;text-align:center;font-size:14px;color:#94A3B8}
+.sb-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.sb-item.active{background:rgba(255,255,255,.10);color:#fff}
+.sb-item.active i{color:#fff}
+.sb-item .badge{margin-left:auto;background:var(--danger);color:#fff;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.sb-user{padding:14px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px}
+.sb-user .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:600}
+.sb-user .un{flex:1;overflow:hidden}
+.sb-user .un b{display:block;font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-user .un span{color:#94A3B8;font-size:11px}
+.sb-user button{color:#94A3B8;padding:4px 8px;border-radius:6px}
+.sb-user button:hover{background:rgba(255,255,255,.08);color:#fff}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg-2)}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:16px}
+.topbar h1{font-size:20px;font-weight:700;flex:1;letter-spacing:-.3px}
+.topbar-btn{padding:9px 14px;background:var(--primary);color:#fff;border-radius:8px;font-weight:500;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:all .15s}
+.topbar-btn:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.topbar-btn.ghost{background:#fff;color:var(--text-1);border:1.5px solid var(--border)}
+.topbar-btn.ghost:hover{background:var(--bg-hover)}
+.content{flex:1;overflow-y:auto;padding:24px 28px 60px}
+.page{display:none}
+.page.active{display:block}
+
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+.stat{background:#fff;border-radius:var(--radius);padding:18px 20px;border:1px solid var(--border);transition:transform .15s,box-shadow .15s}
+.stat:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.stat .icon{width:38px;height:38px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;color:#fff;margin-bottom:12px}
+.stat.pri .icon{background:linear-gradient(135deg,#3B82F6,#6366F1)}
+.stat.suc .icon{background:linear-gradient(135deg,#10B981,#059669)}
+.stat.wrn .icon{background:linear-gradient(135deg,#F59E0B,#D97706)}
+.stat.dng .icon{background:linear-gradient(135deg,#EF4444,#DC2626)}
+.stat.acc .icon{background:linear-gradient(135deg,#0EA5E9,#0284C7)}
+.stat .lbl{color:var(--text-2);font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.stat .val{font-size:26px;font-weight:700;margin-top:4px;letter-spacing:-.5px}
+.stat .sub{color:var(--text-3);font-size:11.5px;margin-top:4px}
+
+/* CARDS */
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:20px}
+.card-hd{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.card-hd h3{font-size:15px;font-weight:600}
+.card-hd .actions{margin-left:auto;display:flex;gap:8px}
+.card-bd{padding:16px 20px}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table.dt{width:100%;border-collapse:collapse}
+table.dt th,table.dt td{padding:11px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.dt th{background:var(--bg-2);font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px}
+table.dt tbody tr:hover{background:var(--bg-hover)}
+table.dt .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+
+/* PILLS */
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.pill.ok{background:#DCFCE7;color:#166534}
+.pill.warn{background:#FEF3C7;color:#92400E}
+.pill.bad{background:#FEE2E2;color:#991B1B}
+.pill.info{background:#DBEAFE;color:#1E40AF}
+.pill.acc{background:#CFFAFE;color:#0C4A6E}
+.pill.gr{background:#F1F5F9;color:#475569}
+
+/* BUTTONS */
+.btn{padding:9px 14px;border-radius:8px;font-weight:500;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:all .15s}
+.btn.pri{background:var(--primary);color:#fff}.btn.pri:hover{background:var(--primary-dark)}
+.btn.suc{background:var(--success);color:#fff}.btn.suc:hover{background:#059669}
+.btn.dng{background:var(--danger);color:#fff}.btn.dng:hover{background:#B91C1C}
+.btn.gh{background:#fff;color:var(--text-1);border:1.5px solid var(--border)}.btn.gh:hover{background:var(--bg-hover)}
+.btn.sm{padding:6px 10px;font-size:12px}
+.btn.icon{width:32px;height:32px;padding:0;justify-content:center}
+
+/* FILTERS */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.filters select,.filters input{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:13px}
+
+/* MODAL */
+.mw{position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:24px;z-index:80}
+.mw.open{display:flex}
+.mw-inner{background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}
+.mw-inner.wide{max-width:800px}
+.mw-hd{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.mw-hd h3{font-size:17px;font-weight:600;flex:1}
+.mw-hd button{color:var(--text-2);font-size:18px;padding:4px 8px;border-radius:6px}
+.mw-hd button:hover{background:var(--bg-hover)}
+.mw-bd{padding:20px 24px;overflow-y:auto;flex:1}
+.mw-ft{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.fg{margin-bottom:16px}
+.fg label{display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg-2);transition:all .15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(15,23,42,.06)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+/* CLAIM CARD */
+.claim-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:12px;transition:all .15s}
+.claim-card:hover{border-color:var(--primary);box-shadow:var(--shadow)}
+.claim-card .top{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.claim-card .top .amt{font-size:20px;font-weight:700}
+.claim-card .top .num{font-family:'DM Mono',monospace;color:var(--text-2);font-size:12px}
+.claim-card .meta{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin-bottom:8px}
+.claim-card .meta b{color:var(--text-1)}
+.claim-card .desc{font-size:13.5px;color:var(--text-1);margin-bottom:10px}
+.claim-card .actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--primary);color:#fff;padding:12px 18px;border-radius:10px;font-size:13.5px;font-weight:500;box-shadow:var(--shadow-lg);display:none;z-index:200}
+.loader{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:44px 20px;color:var(--text-3)}
+.empty i{font-size:36px;margin-bottom:12px;opacity:.5;display:block}
+.hidden{display:none!important}
+
+/* TABS */
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);margin-bottom:18px}
+.tab{padding:10px 16px;font-size:13.5px;font-weight:500;color:var(--text-2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab:hover{color:var(--text-1)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+</style>
+<!-- SweetAlert2 for confirmations + Expense loading state (blur-to-sharp crossfade) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<style>
+  /* Kill admin-flash: hide app shell until role UI is applied */
+  #app.pending { visibility: hidden; }
+  /* Expense loading pattern — blur-to-sharp crossfade on content areas */
+  .page { transition: filter .4s ease, opacity .4s ease; }
+  .page.loading { filter: blur(8px); opacity: 0.55; pointer-events: none; }
+  .page.loaded  { filter: blur(0);   opacity: 1;    }
+  /* Skeleton row (used while loading tables) */
+  .exp-skel { display: inline-block; height: 12px; width: 100%; background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%); background-size: 200% 100%; border-radius: 4px; animation: expShimmer 1.2s infinite linear; }
+  @keyframes expShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <div class="login-head">
+      <div class="logo"><i class="fas fa-wallet"></i></div>
+      <h1>Expense Tracker</h1>
+      <p>Submit and manage reimbursements</p>
+    </div>
+    <div class="login-body">
+      <div id="loginErr" class="login-err"></div>
+      <div class="fg"><label>Email</label><input type="email" id="loginEmail" placeholder="you@company.com"></div>
+      <div class="fg"><label>Password</label><input type="password" id="loginPwd" placeholder="••••••••"></div>
+      <button class="login-btn" onclick="doLogin()" id="loginBtn">Sign In</button>
+      <div class="login-help">
+        <b>Demo accounts:</b><br>
+        admin@expense.com / admin123 (Admin/Finance)<br>
+        manager@expense.com / mgr123 (Manager)<br>
+        emp@expense.com / emp123 (Employee)<br>
+        priya@expense.com or rahul@expense.com / emp123
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ APP SHELL ══════════ -->
+<div id="app">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sb-brand">
+        <div class="logo">E</div>
+        <div><h2>Expense Suite</h2><small>Reimbursement Portal</small></div>
+      </div>
+      <nav class="sb-nav" id="sbNav">
+        <div class="sb-section">Overview</div>
+        <div class="sb-item active" data-page="dashboard"><i class="fas fa-gauge-high"></i>Dashboard</div>
+
+        <div class="sb-section">My Workspace</div>
+        <div class="sb-item" data-page="my-claims"><i class="fas fa-file-invoice-dollar"></i>My Claims</div>
+        <div class="sb-item" data-page="my-advances"><i class="fas fa-hand-holding-dollar"></i>My Advances</div>
+
+        <div class="sb-section" data-approver><b>Approvals</b></div>
+        <div class="sb-item" data-page="pending" data-approver><i class="fas fa-clipboard-check"></i>Pending Approvals <span class="badge hidden" id="pendBadge">0</span></div>
+        <div class="sb-item" data-page="all-claims" data-approver><i class="fas fa-list-check"></i>All Claims</div>
+        <div class="sb-item" data-page="all-advances" data-approver><i class="fas fa-cash-register"></i>All Advances</div>
+
+        <div class="sb-section" data-admin>Admin</div>
+        <div class="sb-item" data-page="categories" data-admin><i class="fas fa-tags"></i>Categories</div>
+        <div class="sb-item" data-page="reports" data-admin><i class="fas fa-chart-line"></i>Reports</div>
+        <div class="sb-item" data-page="email-log" data-admin><i class="fas fa-envelope"></i>Email Log</div>
+      </nav>
+      <div class="sb-user">
+        <div class="av" id="userAv">A</div>
+        <div class="un"><b id="userName">User</b><span id="userRole">Role</span></div>
+        <button onclick="doLogout()" title="Sign out"><i class="fas fa-arrow-right-from-bracket"></i></button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h1 id="pageTitle">Dashboard</h1>
+        <button class="topbar-btn ghost" onclick="location.reload()"><i class="fas fa-rotate"></i></button>
+        <button class="topbar-btn ghost" id="importBtn" onclick="onImportClick()" data-testid="import-csv-btn" title="Import from CSV"><i class="fas fa-file-import"></i><span>Import</span></button>
+        <button class="topbar-btn" onclick="onNewClick()"><i class="fas fa-plus"></i><span id="newBtnLabel">New Claim</span></button>
+      </header>
+      <div class="content" id="content">
+
+        <!-- DASHBOARD -->
+        <div class="page active" id="pg-dashboard">
+          <div class="stats-grid" id="dashStats"></div>
+          <div class="card">
+            <div class="card-hd"><h3>My Recent Claims</h3></div>
+            <div class="tbl-wrap"><table class="dt" id="recentClaims"><thead><tr><th>Claim #</th><th>Date</th><th>Category</th><th>Description</th><th class="num">Amount</th><th class="num">Approved</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+          </div>
+        </div>
+
+        <!-- MY CLAIMS -->
+        <div class="page" id="pg-my-claims">
+          <div class="filters">
+            <select id="fltMyStatus"><option value="">All Status</option><option>Pending</option><option>Approved</option><option>Rejected</option><option>Reimbursed</option></select>
+            <input id="fltMySearch" placeholder="Search description / claim #…">
+          </div>
+          <div id="myClaimsList"></div>
+        </div>
+
+        <!-- MY ADVANCES -->
+        <div class="page" id="pg-my-advances">
+          <div class="card"><div class="tbl-wrap"><table class="dt" id="myAdvTbl"><thead><tr><th>Advance #</th><th>Purpose</th><th>Required By</th><th class="num">Requested</th><th class="num">Approved</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>
+        </div>
+
+        <!-- PENDING APPROVALS -->
+        <div class="page" id="pg-pending">
+          <div id="pendingList"></div>
+        </div>
+
+        <!-- ALL CLAIMS -->
+        <div class="page" id="pg-all-claims">
+          <div class="filters">
+            <select id="fltAllStatus"><option value="">All Status</option><option>Pending</option><option>Approved</option><option>Rejected</option><option>Reimbursed</option></select>
+            <select id="fltAllCategory"><option value="">All Categories</option></select>
+            <input id="fltAllSearch" placeholder="Search employee / claim…">
+          </div>
+          <div class="card"><div class="tbl-wrap"><table class="dt" id="allClaimsTbl"><thead><tr><th>Claim #</th><th>Employee</th><th>Category</th><th>Date</th><th class="num">Amount</th><th class="num">Approved</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>
+        </div>
+
+        <!-- ALL ADVANCES -->
+        <div class="page" id="pg-all-advances">
+          <div class="card"><div class="tbl-wrap"><table class="dt" id="allAdvTbl"><thead><tr><th>Advance #</th><th>Employee</th><th>Purpose</th><th>Required By</th><th class="num">Requested</th><th class="num">Approved</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>
+        </div>
+
+        <!-- CATEGORIES -->
+        <div class="page" id="pg-categories">
+          <div class="card"><div class="tbl-wrap"><table class="dt" id="catTbl"><thead><tr><th>Code</th><th>Name</th><th class="num">Max Limit</th><th>Receipt Required</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>
+        </div>
+
+        <!-- REPORTS -->
+        <div class="page" id="pg-reports">
+          <div class="stats-grid" id="repStats"></div>
+          <div class="card"><div class="card-hd"><h3>Category-wise Spend</h3></div><div class="tbl-wrap"><table class="dt" id="repCatTbl"><thead><tr><th>Category</th><th class="num">Claims</th><th class="num">Claimed</th><th class="num">Approved</th><th class="num">Reimbursed</th></tr></thead><tbody></tbody></table></div></div>
+          <div class="card"><div class="card-hd"><h3>Employee-wise Spend</h3></div><div class="tbl-wrap"><table class="dt" id="repEmpTbl"><thead><tr><th>Employee</th><th class="num">Claims</th><th class="num">Claimed</th><th class="num">Approved</th><th class="num">Reimbursed</th></tr></thead><tbody></tbody></table></div></div>
+        </div>
+
+        <!-- EMAIL LOG -->
+        <div class="page" id="pg-email-log">
+          <div class="card"><div class="tbl-wrap"><table class="dt" id="emailLogTbl"><thead><tr><th>Time</th><th>To</th><th>Subject</th><th>Type</th><th>Status</th><th>Error</th></tr></thead><tbody></tbody></table></div></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- New / Edit Claim -->
+<div class="mw" id="mwClaim"><div class="mw-inner">
+  <div class="mw-hd"><h3 id="claimTitle">New Expense Claim</h3><button onclick="closeM('mwClaim')"><i class="fas fa-xmark"></i></button></div>
+  <form id="claimForm"><div class="mw-bd">
+    <input type="hidden" name="id">
+    <div class="fg-row"><div class="fg"><label>Category *</label><select name="categoryId" id="clmCat" required onchange="onCategoryChange()"></select></div><div class="fg"><label>Amount (₹) *</label><input name="amount" type="number" step="0.01" required id="clmAmt"></div></div>
+    <div id="clmLimitHelp" style="font-size:12px;color:var(--text-2);margin-top:-8px;margin-bottom:12px"></div>
+    <div class="fg-row"><div class="fg"><label>Expense Date *</label><input name="expenseDate" type="date" required></div><div class="fg"><label>Payment Mode</label><select name="paymentMode"><option>Cash</option><option>Credit Card</option><option>Debit Card</option><option>UPI</option><option>Bank Transfer</option></select></div></div>
+    <div class="fg"><label>Description *</label><textarea name="description" rows="3" required placeholder="Business purpose, participants, location..."></textarea></div>
+    <div class="fg"><label>Receipt Link (Google Drive / URL)</label><input name="receipts" placeholder="https://drive.google.com/…"></div>
+  </div><div class="mw-ft"><button type="button" class="btn gh" onclick="closeM('mwClaim')">Cancel</button><button type="submit" class="btn pri"><i class="fas fa-paper-plane"></i>Submit Claim</button></div></form>
+</div></div>
+
+<!-- Advance Request -->
+<div class="mw" id="mwAdvance"><div class="mw-inner">
+  <div class="mw-hd"><h3>Request Advance</h3><button onclick="closeM('mwAdvance')"><i class="fas fa-xmark"></i></button></div>
+  <form id="advForm"><div class="mw-bd">
+    <input type="hidden" name="id">
+    <div class="fg-row"><div class="fg"><label>Amount (₹) *</label><input name="requestedAmount" type="number" step="0.01" required></div><div class="fg"><label>Required By *</label><input name="requiredDate" type="date" required></div></div>
+    <div class="fg"><label>Purpose *</label><textarea name="purpose" rows="3" required></textarea></div>
+  </div><div class="mw-ft"><button type="button" class="btn gh" onclick="closeM('mwAdvance')">Cancel</button><button type="submit" class="btn pri"><i class="fas fa-paper-plane"></i>Submit Request</button></div></form>
+</div></div>
+
+<!-- Approve / Reject Claim -->
+<div class="mw" id="mwDecide"><div class="mw-inner">
+  <div class="mw-hd"><h3 id="decideTitle">Review Claim</h3><button onclick="closeM('mwDecide')"><i class="fas fa-xmark"></i></button></div>
+  <div class="mw-bd" id="decideBody">
+    <!-- filled dynamically -->
+  </div>
+  <div class="mw-ft"><button class="btn gh" onclick="closeM('mwDecide')">Cancel</button><button class="btn dng" id="rejectBtn"><i class="fas fa-xmark"></i>Reject</button><button class="btn suc" id="approveBtn"><i class="fas fa-check"></i>Approve</button></div>
+</div></div>
+
+<!-- Mark Reimbursed -->
+<div class="mw" id="mwReimburse"><div class="mw-inner">
+  <div class="mw-hd"><h3>Mark as Reimbursed</h3><button onclick="closeM('mwReimburse')"><i class="fas fa-xmark"></i></button></div>
+  <form id="reimForm"><div class="mw-bd">
+    <input type="hidden" name="id">
+    <div class="fg"><label>Payment Reference (UTR / Cheque / etc.)</label><input name="ref" required placeholder="NEFT/UTR/XXXXX"></div>
+  </div><div class="mw-ft"><button type="button" class="btn gh" onclick="closeM('mwReimburse')">Cancel</button><button type="submit" class="btn pri">Confirm Reimbursement</button></div></form>
+</div></div>
+
+<!-- Category (Admin) -->
+<div class="mw" id="mwCategory"><div class="mw-inner">
+  <div class="mw-hd"><h3>New Category</h3><button onclick="closeM('mwCategory')"><i class="fas fa-xmark"></i></button></div>
+  <form id="catForm"><div class="mw-bd">
+    <input type="hidden" name="id">
+    <div class="fg-row"><div class="fg"><label>Code *</label><input name="code" required></div><div class="fg"><label>Name *</label><input name="name" required></div></div>
+    <div class="fg-row"><div class="fg"><label>Max Limit (₹)</label><input name="maxLimit" type="number"></div><div class="fg"><label>Receipt Required</label><select name="requiresReceipt"><option value="true">Yes</option><option value="false">No</option></select></div></div>
+    <div class="fg"><label>Description</label><textarea name="description" rows="2"></textarea></div>
+  </div><div class="mw-ft"><button type="button" class="btn gh" onclick="closeM('mwCategory')">Cancel</button><button type="submit" class="btn pri">Save</button></div></form>
+</div></div>
+
+<div id="toast"></div>
+
+<script>
+/* ══════════ STATE ══════════ */
+let currentUser = null;
+let store = { categories:[], myClaims:[], myAdvances:[], allClaims:[], allAdvances:[], pending:[] };
+let curPage = 'dashboard';
+let decideCtx = null;
+
+/* ══════════ SESSION + LOADING HELPERS ══════════ */
+const SESSION_KEY = 'exp_curUser';
+function saveSession(u){ try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(u)); } catch(e){} }
+function clearSession(){ try { sessionStorage.removeItem(SESSION_KEY); } catch(e){} }
+function loadSession(){ try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch(e){ return null; } }
+function blurStart(){ document.querySelectorAll('.page').forEach(p => { p.classList.remove('loaded'); p.classList.add('loading'); }); }
+function blurDone(){ document.querySelectorAll('.page').forEach(p => { p.classList.remove('loading'); p.classList.add('loaded'); }); }
+
+function enterApp(user, isRestore){
+  currentUser = user;
+  document.getElementById('loginScreen').style.display = 'none';
+  const app = document.getElementById('app');
+  app.classList.add('pending');
+  app.style.display = 'block';
+  document.getElementById('userName').textContent = user.name;
+  document.getElementById('userRole').textContent = user.role + ' · ' + (user.department||'');
+  document.getElementById('userAv').textContent = (user.name || '?').charAt(0).toUpperCase();
+  applyRoleUI();
+  requestAnimationFrame(() => app.classList.remove('pending'));
+  blurStart();
+  return loadAll().finally(blurDone);
+}
+
+/* Auto-restore session on page load */
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = loadSession();
+  if (saved) enterApp(saved, true);
+});
+
+/* ══════════ RUNNER ══════════ */
+function gsr(fn, ...args){ return new Promise((res,rej) => { google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](...args); }); }
+
+/* ══════════ LOGIN ══════════ */
+document.getElementById('loginPwd').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+async function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const pwd = document.getElementById('loginPwd').value;
+  const errEl = document.getElementById('loginErr'); errEl.style.display = 'none';
+  if (!email || !pwd){ errEl.textContent = 'Please enter email and password'; errEl.style.display='block'; return; }
+  const btn = document.getElementById('loginBtn'); btn.disabled = true; btn.innerHTML = '<div class="loader"></div>';
+  try {
+    const r = await gsr('authenticateUser', email, pwd);
+    if (!r || !r.success){ errEl.textContent = (r && r.message) || 'Invalid credentials'; errEl.style.display='block'; return; }
+    saveSession(r.user);
+    await enterApp(r.user, false);
+  } catch(e){ errEl.textContent = 'Error: '+e.message; errEl.style.display='block'; }
+  finally { btn.disabled = false; btn.innerHTML = 'Sign In'; }
+}
+async function doLogout(){
+  const r = await Swal.fire({
+    title: 'Sign out?', text: 'You will need to sign in again to continue.',
+    icon: 'question', showCancelButton: true,
+    confirmButtonText: 'Yes, sign out', cancelButtonText: 'Cancel',
+    confirmButtonColor: '#dc2626', reverseButtons: true
+  });
+  if (!r.isConfirmed) return;
+  clearSession();
+  gsr('signOut').finally(() => location.reload());
+}
+
+function applyRoleUI(){
+  const isApprover = ['Admin','Finance','Manager'].indexOf(currentUser.role) !== -1;
+  const isAdmin = ['Admin','Finance'].indexOf(currentUser.role) !== -1;
+  document.querySelectorAll('[data-approver]').forEach(el => el.style.display = isApprover ? '' : 'none');
+  document.querySelectorAll('[data-admin]').forEach(el => el.style.display = isAdmin ? '' : 'none');
+  // "My Advances" tab available to Employees + others (self-service)
+}
+
+/* ══════════ NAV ══════════ */
+document.getElementById('sbNav').addEventListener('click', e => {
+  const item = e.target.closest('.sb-item'); if (!item) return;
+  document.querySelectorAll('.sb-item').forEach(x => x.classList.remove('active'));
+  item.classList.add('active');
+  navigateTo(item.dataset.page);
+});
+function navigateTo(page){
+  curPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('pg-'+page); if (el) el.classList.add('active');
+  const titles = { dashboard:'Dashboard', 'my-claims':'My Claims', 'my-advances':'My Advances', pending:'Pending Approvals', 'all-claims':'All Claims', 'all-advances':'All Advances', categories:'Categories', reports:'Reports', 'email-log':'Email Log' };
+  document.getElementById('pageTitle').textContent = titles[page] || page;
+  document.getElementById('newBtnLabel').textContent = page === 'my-advances' ? 'Request Advance' : page === 'categories' ? 'New Category' : 'New Claim';
+  renderPage(page);
+}
+
+/* ══════════ LOAD ══════════ */
+async function loadAll(){
+  const [cats, my, myAdv, all, allAdv, pend] = await Promise.all([
+    gsr('getAllCategories'), gsr('getMyClaims'), gsr('getMyAdvances'),
+    gsr('getAllClaims'), gsr('getAllAdvances'), gsr('getPendingClaimsForApprover')
+  ]);
+  store.categories = cats.data||[];
+  store.myClaims = my.data||[];
+  store.myAdvances = myAdv.data||[];
+  store.allClaims = all.data||[];
+  store.allAdvances = allAdv.data||[];
+  store.pending = pend.data||[];
+  populateSelects();
+  updateBadges();
+  renderPage(curPage);
+}
+function populateSelects(){
+  const opts = '<option value="">Select…</option>' + store.categories.filter(c => c.active !== false).map(c => `<option value="${c.id}" data-limit="${c.maxLimit}" data-name="${c.name}">${c.name} (max ₹${Number(c.maxLimit||0).toLocaleString('en-IN')})</option>`).join('');
+  document.getElementById('clmCat').innerHTML = opts;
+  document.getElementById('fltAllCategory').innerHTML = '<option value="">All Categories</option>' + store.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+function updateBadges(){
+  const n = store.pending.length; const b = document.getElementById('pendBadge');
+  if (n > 0){ b.textContent = n; b.classList.remove('hidden'); } else b.classList.add('hidden');
+}
+function onCategoryChange(){
+  const sel = document.getElementById('clmCat').selectedOptions[0];
+  const lim = sel && Number(sel.dataset.limit || 0);
+  document.getElementById('clmLimitHelp').textContent = lim ? '⚠ Max limit: ₹'+lim.toLocaleString('en-IN') : '';
+}
+
+/* ══════════ RENDER ══════════ */
+async function renderPage(p){
+  if (p==='dashboard') return renderDashboard();
+  if (p==='my-claims') return renderMyClaims();
+  if (p==='my-advances') return renderMyAdvances();
+  if (p==='pending') return renderPending();
+  if (p==='all-claims') return renderAllClaims();
+  if (p==='all-advances') return renderAllAdvances();
+  if (p==='categories') return renderCategories();
+  if (p==='reports') return renderReports();
+  if (p==='email-log') return renderEmailLog();
+}
+
+async function renderDashboard(){
+  const r = await gsr('getDashboardStats'); const s = r.data;
+  const isApprover = ['Admin','Finance','Manager'].indexOf(currentUser.role) !== -1;
+  const cards = [
+    { icon:'fa-file-invoice-dollar', klass:'pri', lbl:'My Claims', val:s.myTotalClaims, sub:'All time' },
+    { icon:'fa-hourglass-half',      klass:'wrn', lbl:'Pending', val:s.myPending, sub:'₹'+Number(s.myPendingAmount||0).toLocaleString('en-IN') },
+    { icon:'fa-check-circle',        klass:'suc', lbl:'Approved', val:s.myApproved, sub:'₹'+Number(s.myApprovedAmount||0).toLocaleString('en-IN') },
+    { icon:'fa-wallet',              klass:'acc', lbl:'Reimbursed', val:s.myReimbursed, sub:'₹'+Number(s.myReimbursedAmount||0).toLocaleString('en-IN') }
+  ];
+  if (isApprover){
+    cards.push({ icon:'fa-clipboard-check', klass:'dng', lbl:'Awaiting My Approval', val:s.pendingForMe, sub:'₹'+Number(s.pendingForMeAmount||0).toLocaleString('en-IN') });
+    cards.push({ icon:'fa-coins', klass:'suc', lbl:'Company Reimbursed', val:s.totalReimbursed, sub:'₹'+Number(s.totalReimbursedAmount||0).toLocaleString('en-IN') });
+  }
+  document.getElementById('dashStats').innerHTML = cards.map(x => `<div class="stat ${x.klass}"><div class="icon"><i class="fas ${x.icon}"></i></div><div class="lbl">${x.lbl}</div><div class="val">${x.val}</div><div class="sub">${x.sub}</div></div>`).join('');
+  const rows = store.myClaims.slice(-8).reverse().map(c => `<tr>
+    <td><b>${c.claimNumber}</b></td>
+    <td>${fmtDate(c.expenseDate||c.claimDate)}</td>
+    <td>${c.category}</td>
+    <td>${(c.description||'').slice(0,60)}</td>
+    <td class="num">₹${Number(c.amount).toLocaleString('en-IN')}</td>
+    <td class="num">${c.approvedAmount ? '₹'+Number(c.approvedAmount).toLocaleString('en-IN') : '-'}</td>
+    <td>${statusPill(c.status)}</td>
+  </tr>`).join('');
+  document.getElementById('recentClaims').querySelector('tbody').innerHTML = rows || '<tr><td colspan="7" class="empty">No claims yet. Submit your first!</td></tr>';
+}
+
+function statusPill(s){
+  const map = { Pending:'warn', Approved:'info', Rejected:'bad', Reimbursed:'ok', Settled:'ok' };
+  return `<span class="pill ${map[s]||'gr'}">${s}</span>`;
+}
+function fmtDate(v){ if(!v) return '-'; try { return new Date(v).toISOString().split('T')[0]; } catch(e){ return v; } }
+
+function renderMyClaims(){
+  const stF = document.getElementById('fltMyStatus').value;
+  const q = (document.getElementById('fltMySearch').value||'').toLowerCase();
+  const filtered = store.myClaims.filter(c => (!stF || c.status===stF) && (!q || (c.claimNumber+c.description+c.category).toLowerCase().includes(q)));
+  const html = filtered.map(c => `
+    <div class="claim-card">
+      <div class="top">
+        <div class="amt">₹${Number(c.amount).toLocaleString('en-IN')}</div>
+        <div class="num">${c.claimNumber}</div>
+        <div style="margin-left:auto">${statusPill(c.status)}</div>
+      </div>
+      <div class="meta"><span><b>${c.category}</b></span><span>Date: <b>${fmtDate(c.expenseDate)}</b></span><span>Mode: <b>${c.paymentMode||'-'}</b></span>${c.approvedAmount ? '<span>Approved: <b>₹'+Number(c.approvedAmount).toLocaleString('en-IN')+'</b></span>' : ''}${c.approver ? '<span>Approver: <b>'+c.approver+'</b></span>' : ''}</div>
+      <div class="desc">${c.description||''}</div>
+      ${c.remarks ? `<div style="padding:8px 10px;background:var(--bg-2);border-radius:6px;font-size:12.5px;margin-bottom:8px"><b>Remarks:</b> ${c.remarks}</div>` : ''}
+      <div class="actions">
+        ${c.receipts ? `<a href="${c.receipts}" target="_blank" class="btn sm gh"><i class="fas fa-receipt"></i>View Receipt</a>` : ''}
+        ${c.status === 'Pending' ? `<button class="btn sm dng" onclick="doDeleteClaim('${c.id}')"><i class="fas fa-trash"></i>Delete</button>` : ''}
+        ${c.reimbursedRef ? `<span class="pill ok">Paid · ${c.reimbursedRef}</span>` : ''}
+      </div>
+    </div>`).join('');
+  document.getElementById('myClaimsList').innerHTML = html || '<div class="empty" style="background:#fff;border-radius:12px;padding:60px 20px"><i class="fas fa-inbox"></i>No claims found. Click "New Claim" to submit one.</div>';
+}
+['fltMyStatus','fltMySearch'].forEach(id => document.getElementById(id).addEventListener('input', renderMyClaims));
+
+function renderMyAdvances(){
+  const rows = store.myAdvances.map(a => `<tr>
+    <td><b>${a.advanceNumber}</b></td><td>${a.purpose||''}</td><td>${fmtDate(a.requiredDate)}</td>
+    <td class="num">₹${Number(a.requestedAmount||0).toLocaleString('en-IN')}</td>
+    <td class="num">${a.approvedAmount ? '₹'+Number(a.approvedAmount).toLocaleString('en-IN') : '-'}</td>
+    <td>${statusPill(a.status)}</td>
+    <td>${a.status==='Pending' ? `<button class="btn sm dng icon" onclick="doDeleteAdvance('${a.id}')"><i class="fas fa-trash"></i></button>` : ''}</td>
+  </tr>`).join('');
+  document.getElementById('myAdvTbl').querySelector('tbody').innerHTML = rows || '<tr><td colspan="7" class="empty">No advances requested</td></tr>';
+}
+
+function renderPending(){
+  const html = store.pending.map(c => `
+    <div class="claim-card">
+      <div class="top">
+        <div class="amt">₹${Number(c.amount).toLocaleString('en-IN')}</div>
+        <div class="num">${c.claimNumber}</div>
+        <div style="margin-left:auto">${statusPill(c.status)}</div>
+      </div>
+      <div class="meta">
+        <span>By <b>${c.employeeName}</b></span>
+        <span>${c.category}</span>
+        <span>Date: <b>${fmtDate(c.expenseDate)}</b></span>
+        <span>Mode: <b>${c.paymentMode||'-'}</b></span>
+      </div>
+      <div class="desc">${c.description||''}</div>
+      <div class="actions">
+        ${c.receipts ? `<a href="${c.receipts}" target="_blank" class="btn sm gh"><i class="fas fa-receipt"></i>Receipt</a>` : ''}
+        <button class="btn sm suc" onclick="openDecide('${c.id}')"><i class="fas fa-check"></i>Review</button>
+      </div>
+    </div>`).join('');
+  document.getElementById('pendingList').innerHTML = html || '<div class="empty" style="background:#fff;border-radius:12px;padding:60px 20px"><i class="fas fa-check-double"></i>All caught up! No pending approvals.</div>';
+}
+
+function renderAllClaims(){
+  const stF = document.getElementById('fltAllStatus').value;
+  const cf = document.getElementById('fltAllCategory').value;
+  const q = (document.getElementById('fltAllSearch').value||'').toLowerCase();
+  const filtered = store.allClaims.filter(c =>
+    (!stF || c.status === stF) &&
+    (!cf || c.categoryId === cf) &&
+    (!q || (c.claimNumber+c.employeeName+c.description).toLowerCase().includes(q))
+  );
+  const rows = filtered.slice().reverse().map(c => `<tr>
+    <td><b>${c.claimNumber}</b></td>
+    <td>${c.employeeName}</td>
+    <td>${c.category}</td>
+    <td>${fmtDate(c.expenseDate)}</td>
+    <td class="num">₹${Number(c.amount||0).toLocaleString('en-IN')}</td>
+    <td class="num">${c.approvedAmount ? '₹'+Number(c.approvedAmount).toLocaleString('en-IN') : '-'}</td>
+    <td>${statusPill(c.status)}</td>
+    <td>
+      ${c.status==='Pending' ? `<button class="btn sm suc" onclick="openDecide('${c.id}')"><i class="fas fa-check"></i>Review</button>` : ''}
+      ${c.status==='Approved' && ['Admin','Finance'].indexOf(currentUser.role)!==-1 ? `<button class="btn sm pri" onclick="openReimburse('${c.id}')"><i class="fas fa-money-check"></i>Pay</button>` : ''}
+    </td>
+  </tr>`).join('');
+  document.getElementById('allClaimsTbl').querySelector('tbody').innerHTML = rows || '<tr><td colspan="8" class="empty">No claims</td></tr>';
+}
+['fltAllStatus','fltAllCategory','fltAllSearch'].forEach(id => document.getElementById(id).addEventListener('input', renderAllClaims));
+
+function renderAllAdvances(){
+  const rows = store.allAdvances.map(a => `<tr>
+    <td><b>${a.advanceNumber}</b></td><td>${a.employeeName}</td><td>${a.purpose||''}</td>
+    <td>${fmtDate(a.requiredDate)}</td>
+    <td class="num">₹${Number(a.requestedAmount||0).toLocaleString('en-IN')}</td>
+    <td class="num">${a.approvedAmount ? '₹'+Number(a.approvedAmount).toLocaleString('en-IN') : '-'}</td>
+    <td>${statusPill(a.status)}</td>
+    <td>
+      ${a.status==='Pending' ? `<button class="btn sm suc" onclick="approveAdvancePrompt('${a.id}', ${a.requestedAmount})"><i class="fas fa-check"></i></button><button class="btn sm dng icon" onclick="rejectAdvancePrompt('${a.id}')"><i class="fas fa-xmark"></i></button>` : ''}
+    </td>
+  </tr>`).join('');
+  document.getElementById('allAdvTbl').querySelector('tbody').innerHTML = rows || '<tr><td colspan="8" class="empty">No advances</td></tr>';
+}
+
+function renderCategories(){
+  const rows = store.categories.map(c => `<tr>
+    <td><b>${c.code}</b></td><td>${c.name}</td>
+    <td class="num">₹${Number(c.maxLimit||0).toLocaleString('en-IN')}</td>
+    <td>${c.requiresReceipt === true || String(c.requiresReceipt).toLowerCase()==='true' ? '<i class="fas fa-check" style="color:var(--success)"></i>' : '<i class="fas fa-xmark" style="color:var(--text-3)"></i>'}</td>
+    <td><span class="pill ${c.active!==false ? 'ok' : 'gr'}">${c.active!==false ? 'Active' : 'Inactive'}</span></td>
+    <td><button class="btn sm gh icon" onclick="editCategory('${c.id}')"><i class="fas fa-pen"></i></button></td>
+  </tr>`).join('');
+  document.getElementById('catTbl').querySelector('tbody').innerHTML = rows || '<tr><td colspan="6" class="empty">No categories</td></tr>';
+}
+
+function renderReports(){
+  const claims = store.allClaims;
+  const total = claims.reduce((s,c)=>s+Number(c.amount||0),0);
+  const appr = claims.filter(c=>c.status==='Approved'||c.status==='Reimbursed').reduce((s,c)=>s+Number(c.approvedAmount||0),0);
+  const reim = claims.filter(c=>c.status==='Reimbursed').reduce((s,c)=>s+Number(c.approvedAmount||0),0);
+  const stats = [
+    { icon:'fa-file-invoice-dollar', klass:'pri', lbl:'Total Claims', val:claims.length, sub:'₹'+total.toLocaleString('en-IN') },
+    { icon:'fa-check-circle', klass:'suc', lbl:'Approved', val:claims.filter(c=>c.status==='Approved'||c.status==='Reimbursed').length, sub:'₹'+appr.toLocaleString('en-IN') },
+    { icon:'fa-wallet', klass:'acc', lbl:'Reimbursed', val:claims.filter(c=>c.status==='Reimbursed').length, sub:'₹'+reim.toLocaleString('en-IN') },
+    { icon:'fa-xmark-circle', klass:'dng', lbl:'Rejected', val:claims.filter(c=>c.status==='Rejected').length, sub:'This period' }
+  ];
+  document.getElementById('repStats').innerHTML = stats.map(x => `<div class="stat ${x.klass}"><div class="icon"><i class="fas ${x.icon}"></i></div><div class="lbl">${x.lbl}</div><div class="val">${x.val}</div><div class="sub">${x.sub}</div></div>`).join('');
+  // by category
+  const byCat = {};
+  claims.forEach(c => { byCat[c.category] = byCat[c.category] || { count:0, claimed:0, approved:0, reimbursed:0 }; byCat[c.category].count++; byCat[c.category].claimed += Number(c.amount||0); if (c.status==='Approved'||c.status==='Reimbursed') byCat[c.category].approved += Number(c.approvedAmount||0); if (c.status==='Reimbursed') byCat[c.category].reimbursed += Number(c.approvedAmount||0); });
+  document.getElementById('repCatTbl').querySelector('tbody').innerHTML = Object.entries(byCat).map(([k,v]) => `<tr><td>${k}</td><td class="num">${v.count}</td><td class="num">₹${v.claimed.toLocaleString('en-IN')}</td><td class="num">₹${v.approved.toLocaleString('en-IN')}</td><td class="num">₹${v.reimbursed.toLocaleString('en-IN')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">No data</td></tr>';
+  // by employee
+  const byEmp = {};
+  claims.forEach(c => { byEmp[c.employeeName] = byEmp[c.employeeName] || { count:0, claimed:0, approved:0, reimbursed:0 }; byEmp[c.employeeName].count++; byEmp[c.employeeName].claimed += Number(c.amount||0); if (c.status==='Approved'||c.status==='Reimbursed') byEmp[c.employeeName].approved += Number(c.approvedAmount||0); if (c.status==='Reimbursed') byEmp[c.employeeName].reimbursed += Number(c.approvedAmount||0); });
+  document.getElementById('repEmpTbl').querySelector('tbody').innerHTML = Object.entries(byEmp).map(([k,v]) => `<tr><td>${k}</td><td class="num">${v.count}</td><td class="num">₹${v.claimed.toLocaleString('en-IN')}</td><td class="num">₹${v.approved.toLocaleString('en-IN')}</td><td class="num">₹${v.reimbursed.toLocaleString('en-IN')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">No data</td></tr>';
+}
+
+async function renderEmailLog(){
+  // No dedicated getter — show placeholder using empty state
+  document.getElementById('emailLogTbl').querySelector('tbody').innerHTML = '<tr><td colspan="6" class="empty">Email log is written to the EmailLog sheet.<br>Open your Google Sheet to view detailed delivery status.</td></tr>';
+}
+
+/* ══════════ ACTIONS ══════════ */
+function toast(msg, ms=2400){ const t = document.getElementById('toast'); t.textContent = msg; t.style.display='block'; clearTimeout(t._to); t._to = setTimeout(()=>t.style.display='none', ms); }
+function openM(id){ document.getElementById(id).classList.add('open'); }
+function closeM(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.mw').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+
+function onNewClick(){
+  if (curPage === 'my-advances') { document.getElementById('advForm').reset(); openM('mwAdvance'); return; }
+  if (curPage === 'categories'){ document.getElementById('catForm').reset(); openM('mwCategory'); return; }
+  // default: new claim
+  document.getElementById('claimForm').reset();
+  document.getElementById('claimTitle').textContent = 'New Expense Claim';
+  document.getElementById('clmLimitHelp').textContent = '';
+  document.querySelector('#claimForm [name=expenseDate]').value = new Date().toISOString().split('T')[0];
+  openM('mwClaim');
+}
+function onImportClick(){
+  const pageToEntity = { 'my-claims':'Claims', 'all-claims':'Claims', 'my-advances':'Advances', 'all-advances':'Advances', 'categories':'ExpCategories' };
+  const entity = pageToEntity[curPage];
+  if (!entity) { toast('CSV import is not available on this page'); return; }
+  APP.openCsvImport(entity);
+}
+
+document.getElementById('claimForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target); const d = {}; fd.forEach((v,k) => d[k] = v);
+  d.amount = Number(d.amount);
+  // enrich category name
+  const cat = store.categories.find(c => c.id === d.categoryId); if (cat){ d.category = cat.name; if (cat.maxLimit && d.amount > Number(cat.maxLimit)){ if (!confirm('Amount ₹'+d.amount+' exceeds category limit ₹'+cat.maxLimit+'. Submit anyway?')) return; } }
+  const r = await gsr('submitClaim', d);
+  if (r.success){ closeM('mwClaim'); toast('Claim submitted — approver notified via email ✉'); await loadAll(); } else toast('Error: '+r.message);
+});
+
+document.getElementById('advForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target); const d = {}; fd.forEach((v,k) => d[k] = v);
+  d.requestedAmount = Number(d.requestedAmount);
+  const r = await gsr('requestAdvance', d);
+  if (r.success){ closeM('mwAdvance'); toast('Advance requested ✓ Notification sent'); await loadAll(); } else toast('Error: '+r.message);
+});
+
+document.getElementById('catForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target); const d = {}; fd.forEach((v,k) => d[k] = v);
+  d.maxLimit = Number(d.maxLimit||0); d.requiresReceipt = d.requiresReceipt === 'true';
+  const fn = d.id ? 'updateCategory' : 'addCategory';
+  const r = d.id ? await gsr(fn, d.id, d) : await gsr(fn, d);
+  if (r.success){ closeM('mwCategory'); toast('Category saved ✓'); await loadAll(); } else toast('Error');
+});
+function editCategory(id){ const c = store.categories.find(x=>x.id===id); if(!c) return; const f = document.getElementById('catForm'); Object.keys(c).forEach(k => { if (f.elements[k]) f.elements[k].value = String(c[k]); }); openM('mwCategory'); }
+
+async function doDeleteClaim(id){ if(!confirm('Delete this pending claim?')) return; const r = await gsr('deleteClaim', id); if (r.success){ toast('Deleted'); await loadAll(); } else toast('Error: '+r.message); }
+async function doDeleteAdvance(id){ if(!confirm('Delete this advance request?')) return; const r = await gsr('deleteAdvance', id); if (r.success){ toast('Deleted'); await loadAll(); } else toast('Error: '+r.message); }
+
+/* Decide (Approve/Reject) */
+function openDecide(id){
+  const c = store.allClaims.find(x=>x.id===id) || store.pending.find(x=>x.id===id);
+  if (!c) return; decideCtx = c;
+  document.getElementById('decideTitle').textContent = 'Review · '+c.claimNumber;
+  document.getElementById('decideBody').innerHTML = `
+    <div style="text-align:center;padding:10px 0 20px"><div style="font-size:32px;font-weight:700;color:var(--primary)">₹${Number(c.amount).toLocaleString('en-IN')}</div><div style="color:var(--text-2);font-size:13px;margin-top:4px">${c.category} · ${c.employeeName}</div></div>
+    <div class="fg"><label>Description</label><div style="padding:10px 12px;background:var(--bg-2);border-radius:8px;font-size:13.5px">${c.description||'-'}</div></div>
+    <div class="fg-row"><div class="fg"><label>Expense Date</label><input readonly value="${fmtDate(c.expenseDate)}"></div><div class="fg"><label>Payment Mode</label><input readonly value="${c.paymentMode||'-'}"></div></div>
+    ${c.receipts ? `<div class="fg"><label>Receipt</label><a href="${c.receipts}" target="_blank" class="btn gh sm"><i class="fas fa-receipt"></i>View Receipt</a></div>` : ''}
+    <div class="fg"><label>Approved Amount (₹)</label><input id="dcApprAmt" type="number" step="0.01" value="${c.amount}"></div>
+    <div class="fg"><label>Remarks</label><textarea id="dcRemarks" rows="2" placeholder="Optional comments to employee…"></textarea></div>`;
+  openM('mwDecide');
+}
+document.getElementById('approveBtn').addEventListener('click', async () => {
+  if(!decideCtx) return;
+  const amt = Number(document.getElementById('dcApprAmt').value||decideCtx.amount);
+  const rem = document.getElementById('dcRemarks').value;
+  const r = await gsr('approveClaim', decideCtx.id, amt, rem);
+  if (r.success){ closeM('mwDecide'); toast('Approved ✓ Employee notified via email'); await loadAll(); } else toast('Error: '+r.message);
+});
+document.getElementById('rejectBtn').addEventListener('click', async () => {
+  if(!decideCtx) return;
+  const rem = document.getElementById('dcRemarks').value;
+  const r = await gsr('rejectClaim', decideCtx.id, rem);
+  if (r.success){ closeM('mwDecide'); toast('Rejected · Employee notified'); await loadAll(); } else toast('Error: '+r.message);
+});
+
+/* Reimburse */
+function openReimburse(id){ document.getElementById('reimForm').reset(); document.getElementById('reimForm').elements.id.value = id; openM('mwReimburse'); }
+document.getElementById('reimForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target); const id = fd.get('id'); const ref = fd.get('ref');
+  const r = await gsr('markClaimReimbursed', id, ref);
+  if (r.success){ closeM('mwReimburse'); toast('Marked as reimbursed ✓ Notification sent'); await loadAll(); } else toast('Error: '+r.message);
+});
+
+/* Advances quick approve/reject */
+async function approveAdvancePrompt(id, amt){
+  const a = prompt('Approve amount (₹)', amt); if (a === null) return;
+  const rem = prompt('Remarks (optional)', '') || '';
+  const r = await gsr('approveAdvance', id, Number(a), rem);
+  if (r.success){ toast('Advance approved ✓'); await loadAll(); } else toast('Error: '+r.message);
+}
+async function rejectAdvancePrompt(id){
+  const rem = prompt('Reason for rejection', ''); if (rem === null) return;
+  const r = await gsr('rejectAdvance', id, rem);
+  if (r.success){ toast('Rejected'); await loadAll(); } else toast('Error: '+r.message);
+}
+
+
+/* ═══ APP CORE + entity registration for Expense ═══ */
+/* ═══════════════════════════════════════════════════════════════════════
+   APP CORE — shared client-side utilities
+   Items 13 (CSV import) · 14 (pagination) · 15 (client cache) · 16 (prefetch)
+
+   INTEGRATION:
+     1. Load PapaParse + SweetAlert2 in <head>:
+          [sweetalert2 CDN]
+          [papaparse CDN]
+     2. Paste this block inside a script tag AFTER `gsr()` is defined.
+     3. Register entities via APP.entities = { key: {label, sheet, columns[], sample[]}, ... }
+     4. To paginate a table: APP.renderPaginated(ctxKey, dataArr, tbodyId, pagerId, rowFn)
+     5. To open CSV import: APP.openCsvImport('Products')
+   ══════════════════════════════════════════════════════════════════════ */
+const APP = (function () {
+  const PAGE_SIZES = [10, 20, 25, 50, 100];
+  const DEFAULT_SIZE = 20;
+  const CACHE_TTL_MS = 60_000;
+
+  /* ─── client cache (Map keyed by ctx|page|size) ────────────────────── */
+  const cache = new Map();
+  const keyOf = (ctx, page, size) => ctx + '|' + page + '|' + size;
+  function cacheGet(ctx, page, size) {
+    const hit = cache.get(keyOf(ctx, page, size));
+    if (!hit) return null;
+    if (Date.now() - hit.ts > CACHE_TTL_MS) { cache.delete(keyOf(ctx, page, size)); return null; }
+    return hit.data;
+  }
+  function cachePut(ctx, page, size, data) {
+    cache.set(keyOf(ctx, page, size), { data, ts: Date.now() });
+  }
+  function cacheInvalidate(ctxPrefix) {
+    if (!ctxPrefix) { cache.clear(); return; }
+    Array.from(cache.keys()).filter(k => k.startsWith(ctxPrefix)).forEach(k => cache.delete(k));
+  }
+
+  /* ─── pagination state per ctx ─────────────────────────────────────── */
+  const pagerState = new Map(); // ctx -> { page, size }
+  function getPager(ctx) {
+    if (!pagerState.has(ctx)) pagerState.set(ctx, { page: 1, size: DEFAULT_SIZE });
+    return pagerState.get(ctx);
+  }
+  function setPager(ctx, next) {
+    const s = getPager(ctx);
+    Object.assign(s, next);
+    pagerState.set(ctx, s);
+  }
+
+  /* ─── slice + render helper ────────────────────────────────────────── */
+  function paginate(arr, page, size) {
+    const total = arr.length;
+    const totalPages = Math.max(1, Math.ceil(total / size));
+    const p = Math.min(Math.max(1, page), totalPages);
+    const start = (p - 1) * size;
+    return { data: arr.slice(start, start + size), total, page: p, size, totalPages };
+  }
+
+  /* ─── pagination controls UI ───────────────────────────────────────── */
+  function renderPager(pagerId, ctx, total, page, size, onChange) {
+    const el = document.getElementById(pagerId);
+    if (!el) return;
+    const totalPages = Math.max(1, Math.ceil(total / size));
+    const from = total ? (page - 1) * size + 1 : 0;
+    const to = Math.min(total, page * size);
+    const sizeOpts = PAGE_SIZES.map(n => `<option value="${n}" ${n===size?'selected':''}>${n} / page</option>`).join('');
+    el.innerHTML = `
+      <div class="app-pager" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-top:1px solid #e5e7eb;font-size:12px;color:#475569;flex-wrap:wrap">
+        <div>Showing <b>${from}</b>–<b>${to}</b> of <b>${total}</b></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select data-testid="pager-size-${ctx}" class="app-pager-size" style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px">${sizeOpts}</select>
+          <button data-testid="pager-first-${ctx}" class="app-pager-btn" ${page<=1?'disabled':''} title="First">«</button>
+          <button data-testid="pager-prev-${ctx}"  class="app-pager-btn" ${page<=1?'disabled':''} title="Prev">‹</button>
+          <span style="min-width:70px;text-align:center"><b>${page}</b> / ${totalPages}</span>
+          <button data-testid="pager-next-${ctx}"  class="app-pager-btn" ${page>=totalPages?'disabled':''} title="Next">›</button>
+          <button data-testid="pager-last-${ctx}"  class="app-pager-btn" ${page>=totalPages?'disabled':''} title="Last">»</button>
+        </div>
+      </div>
+      <style>
+        .app-pager-btn{padding:4px 10px;border:1px solid #d1d5db;background:#fff;border-radius:6px;cursor:pointer;font-size:12px}
+        .app-pager-btn:hover:not([disabled]){background:#f1f5f9}
+        .app-pager-btn[disabled]{opacity:.45;cursor:not-allowed}
+      </style>`;
+    el.querySelector('.app-pager-size').addEventListener('change', e => {
+      const newSize = parseInt(e.target.value, 10);
+      setPager(ctx, { size: newSize, page: 1 });
+      onChange();
+    });
+    el.querySelector(`[data-testid="pager-first-${ctx}"]`).addEventListener('click', () => { setPager(ctx, { page: 1 }); onChange(); });
+    el.querySelector(`[data-testid="pager-prev-${ctx}"]`).addEventListener('click',  () => { setPager(ctx, { page: Math.max(1, page-1) }); onChange(); });
+    el.querySelector(`[data-testid="pager-next-${ctx}"]`).addEventListener('click',  () => { setPager(ctx, { page: Math.min(totalPages, page+1) }); onChange(); });
+    el.querySelector(`[data-testid="pager-last-${ctx}"]`).addEventListener('click',  () => { setPager(ctx, { page: totalPages }); onChange(); });
+  }
+
+  /* ─── main paginated-render entry point ─────────────────────────────── */
+  function renderPaginated(ctx, arr, tbodyId, pagerId, rowFn) {
+    const st = getPager(ctx);
+    const cached = cacheGet(ctx, st.page, st.size);
+    const chunk = cached || paginate(arr || [], st.page, st.size);
+    if (!cached) cachePut(ctx, st.page, st.size, chunk);
+    const tbody = document.getElementById(tbodyId);
+    if (tbody) tbody.innerHTML = chunk.data.map(rowFn).join('') || `<tr><td colspan="99" style="text-align:center;padding:20px;color:#94a3b8">No records</td></tr>`;
+    renderPager(pagerId, ctx, chunk.total, chunk.page, chunk.size, () => renderPaginated(ctx, arr, tbodyId, pagerId, rowFn));
+    // background prefetch of next page (item 16) — just warms the cache
+    if (chunk.page < chunk.totalPages && !cacheGet(ctx, chunk.page + 1, chunk.size)) {
+      setTimeout(() => { cachePut(ctx, chunk.page + 1, chunk.size, paginate(arr, chunk.page + 1, chunk.size)); }, 30);
+    }
+  }
+
+  /* ─── CSV bulk import engine ────────────────────────────────────────── */
+  const entities = {};
+  function registerEntity(key, config) { entities[key] = config; }
+
+  function downloadSampleCsv(entityKey) {
+    const cfg = entities[entityKey]; if (!cfg) return;
+    const header = cfg.columns.join(',');
+    const sample = (cfg.sample || []).map(row =>
+      cfg.columns.map(c => {
+        const v = row[c]; if (v == null) return '';
+        const s = String(v);
+        return s.indexOf(',') !== -1 || s.indexOf('"') !== -1 ? `"${s.replace(/"/g, '""')}"` : s;
+      }).join(',')).join('\n');
+    const csv = header + '\n' + (sample || cfg.columns.map(() => '').join(','));
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${entityKey}_template.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function parseCsvFile(file) {
+    return new Promise((resolve, reject) => {
+      if (typeof Papa === 'undefined') { reject(new Error('PapaParse not loaded')); return; }
+      Papa.parse(file, {
+        header: true, skipEmptyLines: true, trimHeaders: true,
+        complete: r => resolve(r.data),
+        error: err => reject(err)
+      });
+    });
+  }
+
+  function validateRows(entityKey, rows) {
+    const cfg = entities[entityKey]; if (!cfg) return { valid: [], invalid: [] };
+    const required = cfg.required || [];
+    const valid = [], invalid = [];
+    rows.forEach((row, i) => {
+      const errs = [];
+      required.forEach(col => { if (!row[col] || String(row[col]).trim() === '') errs.push(`Missing "${col}"`); });
+      if (cfg.validate) { try { const extra = cfg.validate(row); if (extra) errs.push(extra); } catch(e){ errs.push(e.message); } }
+      if (errs.length) invalid.push({ row: i + 2, data: row, errors: errs });
+      else valid.push(row);
+    });
+    return { valid, invalid };
+  }
+
+  async function bulkImportRows(entityKey, rows, onProgress) {
+    const cfg = entities[entityKey];
+    const sheet = cfg.sheet;
+    const batchSize = 20;
+    const totals = { ok: 0, failed: 0, errors: [] };
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = rows.slice(i, i + batchSize);
+      const r = await gsr('bulkImport', sheet, batch);
+      if (r && r.success) {
+        totals.ok += r.ok || 0;
+        totals.failed += r.failed || 0;
+        (r.errors || []).forEach(e => totals.errors.push({ row: i + e.row, message: e.message }));
+      } else {
+        totals.failed += batch.length;
+        totals.errors.push({ row: i + 1, message: (r && r.message) || 'Batch failed' });
+      }
+      onProgress && onProgress(Math.min(i + batchSize, rows.length), rows.length);
+    }
+    cacheInvalidate(entityKey); // any list showing this entity is now stale
+    return totals;
+  }
+
+  function openCsvImport(entityKey) {
+    const cfg = entities[entityKey];
+    if (!cfg) { alert('Unknown entity: ' + entityKey); return; }
+    if (typeof Papa === 'undefined') { alert('PapaParse CDN not loaded — cannot parse CSV'); return; }
+    const html = `
+      <div style="text-align:left;font-size:13px">
+        <p style="margin:0 0 12px">Import <b>${cfg.label}</b> from a CSV file.</p>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button id="csvDlTpl" class="swal2-styled" style="background:#0369a1;font-size:12px;padding:6px 12px">↓ Sample template</button>
+          <label for="csvFileInput" class="swal2-styled" style="background:#059669;font-size:12px;padding:6px 12px;cursor:pointer">Choose CSV…</label>
+          <input type="file" id="csvFileInput" accept=".csv" style="display:none">
+          <span id="csvFileName" style="align-self:center;color:#64748b;font-size:12px">No file chosen</span>
+        </div>
+        <div id="csvPreview" style="border:1px solid #e5e7eb;border-radius:8px;max-height:220px;overflow:auto;padding:8px;font-size:11px;background:#f8fafc;color:#64748b">Choose a file to preview.</div>
+        <div id="csvProgressWrap" style="display:none;margin-top:12px">
+          <div style="font-size:12px;color:#475569;margin-bottom:6px" id="csvProgressLabel">Importing…</div>
+          <div style="height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden"><div id="csvProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#0ea5e9,#8b5cf6);transition:width .3s"></div></div>
+        </div>
+      </div>`;
+    Swal.fire({
+      title: 'Import ' + cfg.label + ' from CSV',
+      html, width: 620, showCancelButton: true, confirmButtonText: 'Import',
+      cancelButtonText: 'Cancel', confirmButtonColor: '#059669',
+      focusConfirm: false, allowOutsideClick: false,
+      didOpen: () => {
+        let parsedValid = [], parsedInvalid = [];
+        document.getElementById('csvDlTpl').addEventListener('click', () => downloadSampleCsv(entityKey));
+        document.getElementById('csvFileInput').addEventListener('change', async e => {
+          const file = e.target.files[0]; if (!file) return;
+          document.getElementById('csvFileName').textContent = file.name;
+          try {
+            const rows = await parseCsvFile(file);
+            const { valid, invalid } = validateRows(entityKey, rows);
+            parsedValid = valid; parsedInvalid = invalid;
+            const preview = document.getElementById('csvPreview');
+            let msg = `<b style="color:#059669">${valid.length}</b> valid · <b style="color:#dc2626">${invalid.length}</b> invalid<br>`;
+            if (invalid.length) {
+              msg += `<div style="margin-top:8px;color:#dc2626">First 5 issues:</div><ul style="margin:4px 0 0 18px;padding:0">`;
+              invalid.slice(0, 5).forEach(x => { msg += `<li>Row ${x.row}: ${x.errors.join(', ')}</li>`; });
+              msg += '</ul>';
+            }
+            if (valid.length) {
+              msg += `<div style="margin-top:8px;color:#059669">First 3 rows to import:</div><pre style="margin:4px 0;font-size:10px;color:#334155;white-space:pre-wrap">${valid.slice(0, 3).map(r => JSON.stringify(r)).join('\n')}</pre>`;
+            }
+            preview.innerHTML = msg;
+          } catch(err) {
+            document.getElementById('csvPreview').innerHTML = `<span style="color:#dc2626">Parse error: ${err.message}</span>`;
+          }
+        });
+        // Intercept confirm — actually run import
+        const swBtn = Swal.getConfirmButton();
+        swBtn.addEventListener('click', async e => {
+          if (parsedValid.length === 0) { e.stopPropagation(); Swal.showValidationMessage('No valid rows to import'); return; }
+          e.stopPropagation();
+          swBtn.disabled = true; Swal.getCancelButton().disabled = true;
+          document.getElementById('csvProgressWrap').style.display = 'block';
+          const bar = document.getElementById('csvProgressBar');
+          const label = document.getElementById('csvProgressLabel');
+          const res = await bulkImportRows(entityKey, parsedValid, (done, total) => {
+            const pct = Math.round(done / total * 100);
+            bar.style.width = pct + '%';
+            label.textContent = `Importing… ${done} / ${total}`;
+          });
+          Swal.close();
+          setTimeout(() => Swal.fire({
+            icon: res.failed === 0 ? 'success' : (res.ok > 0 ? 'warning' : 'error'),
+            title: res.failed === 0 ? 'Import complete!' : 'Import finished with issues',
+            html: `<div style="text-align:left;font-size:13px">
+              <b style="color:#059669">${res.ok}</b> rows imported · <b style="color:#dc2626">${res.failed}</b> failed
+              ${res.errors && res.errors.length ? '<div style="margin-top:10px;max-height:180px;overflow:auto;font-size:11px;color:#dc2626"><ul style="margin:0 0 0 18px">' + res.errors.slice(0,30).map(e => `<li>Row ${e.row}: ${e.message}</li>`).join('') + '</ul></div>' : ''}
+              ${parsedInvalid.length ? `<div style="margin-top:8px;color:#b45309;font-size:12px">${parsedInvalid.length} rows were skipped due to validation errors.</div>` : ''}
+            </div>`,
+            confirmButtonText: 'OK', confirmButtonColor: '#059669'
+          }), 150);
+        }, true);
+      }
+    });
+  }
+
+  return {
+    /* pagination + cache */
+    renderPaginated, paginate, getPager, setPager,
+    cacheInvalidate,
+    /* csv */
+    registerEntity, openCsvImport, downloadSampleCsv,
+    entities,
+    PAGE_SIZES, DEFAULT_SIZE
+  };
+})();
+
+APP.registerEntity('ExpCategories', {
+  label: 'Expense Categories', sheet: 'ExpCategories',
+  columns: ['code','name','maxLimit','requiresReceipt','description','active'],
+  required: ['code','name'],
+  sample: [{ code:'TRV', name:'Travel', maxLimit:30000, requiresReceipt:true, description:'Business travel', active:true }]
+});
+APP.registerEntity('Claims', {
+  label: 'Claims', sheet: 'Claims',
+  columns: ['claimNumber','employeeId','employeeName','employeeEmail','category','categoryId','amount','currency','claimDate','expenseDate','description','receipts','paymentMode','status','approver','approverEmail'],
+  required: ['employeeEmail','category','amount','expenseDate'],
+  sample: [{ claimNumber:'CLM/2026/9001', employeeId:'EU-XXX', employeeName:'John Doe', employeeEmail:'john@ex.com', category:'Travel', categoryId:'CAT-TRV', amount:2500, currency:'INR', claimDate:'2026-01-15', expenseDate:'2026-01-14', description:'Client cab', receipts:'https://drive.google.com/x', paymentMode:'Credit Card', status:'Pending', approver:'Sales Manager', approverEmail:'mgr@ex.com' }]
+});
+APP.registerEntity('Advances', {
+  label: 'Advances', sheet: 'Advances',
+  columns: ['advanceNumber','employeeId','employeeName','employeeEmail','purpose','requestedAmount','requiredDate','status'],
+  required: ['employeeEmail','purpose','requestedAmount','requiredDate'],
+  sample: [{ advanceNumber:'ADV/2026/9001', employeeId:'EU-XXX', employeeName:'John Doe', employeeEmail:'john@ex.com', purpose:'Client trip', requestedAmount:15000, requiredDate:'2026-02-01', status:'Pending' }]
+});
+
+</script>
+</body>
+</html>

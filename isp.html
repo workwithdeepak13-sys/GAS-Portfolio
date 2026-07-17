@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISP ERP</title>
+<base target="_top">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --pri:#0F172A;--pri-d:#020617;--pri-2:#1D2939;--acc:#0EA5E9;--acc-2:#38BDF8;--success:#10B981;--warning:#F59E0B;--danger:#EF4444;--info:#3B82F6;--violet:#8B5CF6;
+  --t1:#0F172A;--t2:#64748B;--t3:#94A3B8;--bg2:#F5F7FA;--hover:#F1F5F9;--bd:#E2E8F0;
+  --shadow:0 4px 6px -1px rgba(0,0,0,.08);--shadow-lg:0 20px 35px -10px rgba(0,0,0,.18);--radius:14px;--radius-sm:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:'Inter',sans-serif;background:var(--bg2);color:var(--t1);font-size:14px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:14px;outline:none;color:var(--t1)}
+a{color:inherit;text-decoration:none}.hidden{display:none!important}
+
+/* LOADER */
+#prog{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#0EA5E9,#8B5CF6,#10B981);z-index:9999;transition:width .35s cubic-bezier(.4,0,.2,1),opacity .4s;box-shadow:0 0 8px rgba(59,130,246,.5)}
+#prog.done{opacity:0}
+@keyframes rowIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}tbody tr{animation:rowIn .3s ease both};
+.loader{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+
+/* APP SHELL */
+.shell{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+.sidebar{background:linear-gradient(180deg,#0F172A 0%,#13213A 100%);color:#fff;display:flex;flex-direction:column;overflow:hidden;position:sticky;top:0;height:100vh;border-right:1px solid rgba(255,255,255,.06)}
+.sb-brand{padding:22px 22px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-brand .logo{width:38px;height:38px;background:linear-gradient(135deg,#0EA5E9,#8B5CF6);color:#fff;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;box-shadow:0 6px 14px rgba(139,92,246,.35)}
+.sb-brand h2{font-size:15px;font-weight:700;letter-spacing:-.1px}.sb-brand small{display:block;color:#94A3B8;font-size:11px;font-weight:500;margin-top:2px}
+.sb-nav{flex:1;overflow-y:auto;padding:14px 12px}
+.sb-section{margin-top:18px;padding:8px 10px 6px;font-size:10.5px;font-weight:700;color:#64748B;letter-spacing:1.1px;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;font-weight:500;font-size:13.5px;cursor:pointer;color:#C9D3DF;transition:.18s;position:relative;margin-bottom:3px}
+.sb-item i{width:18px;text-align:center;font-size:14px;color:#8CA3B8;transition:.18s}
+.sb-item:hover{background:rgba(255,255,255,.08);color:#fff}.sb-item.active{background:rgba(255,255,255,.12);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.sb-item.active i{color:#fff}.sb-item .badge{margin-left:auto;background:var(--danger);color:#fff;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid rgba(255,255,255,.15)}
+.sb-user{padding:14px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px}
+.sb-user .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#8B5CF6);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;border:1px solid rgba(255,255,255,.18)}
+.sb-user .un{flex:1;overflow:hidden}.sb-user .un b{display:block;font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sb-user .un span{color:#94A3B8;font-size:11px;font-weight:500}
+.sb-user button{padding:6px;border-radius:8px;color:#94A3B8;transition:.15s}.sb-user button:hover{background:rgba(255,255,255,.08);color:#fff}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(1200px 600px at -10% -10%,rgba(14,165,233,.08),transparent 30%),radial-gradient(1000px 500px at 110% 10%,rgba(139,92,246,.08),transparent 30%),var(--bg2)}
+.topbar{background:rgba(255,255,255,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--bd);padding:14px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:40}
+.topbar .brand{display:flex;align-items:center;gap:10px}
+.topbar .brand .dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#10B981);box-shadow:0 0 0 4px rgba(16,185,129,.15)}
+.topbar h1{font-size:18px;font-weight:700;letter-spacing:-.2px}
+.topbar .sp{margin-left:auto;display:flex;align-items:center;gap:10px}
+.iconbtn{position:relative;width:38px;height:38px;border-radius:10px;border:1.5px solid var(--bd);display:inline-flex;align-items:center;justify-content:center;color:var(--t2);background:rgba(255,255,255,.8);transition:.15s}
+.iconbtn:hover{background:var(--hover);transform:translateY(-1px)}.iconbtn .badge{position:absolute;top:-5px;right:-5px;background:var(--danger);color:#fff;font-size:10px;border-radius:999px;padding:1px 7px;font-weight:700;border:2px solid #fff}
+
+.content{flex:1;overflow-y:auto;padding:26px 28px 70px}
+.page{display:none;animation:fadeIn .3s ease}.page.active{display:block}@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* BENTO GRID */
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-bottom:22px}
+.b{background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.75));backdrop-filter:blur(10px);border:1px solid rgba(226,232,240,.9);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 8px 18px -8px rgba(15,23,42,.08);transition:transform .18s,box-shadow .18s}
+.b:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.b.col-3{grid-column:span 3}.b.col-4{grid-column:span 4}.b.col-6{grid-column:span 6}.b.col-8{grid-column:span 8}.b.col-12{grid-column:span 12}
+.b .label{color:var(--t2);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.12em}
+.b .value{font-size:34px;font-weight:700;margin-top:8px;letter-spacing:-.4px}
+.b .delta{color:var(--success);font-size:12px;margin-top:6px;font-weight:600}
+.b .glow{position:absolute;width:140px;height:140px;border-radius:50%;filter:blur(40px);opacity:.25;right:-30px;top:-40px}
+@media(max-width:1100px){.b.col-3,.b.col-4{grid-column:span 6}.b.col-8{grid-column:span 12}}@media(max-width:720px){.b.col-3,.b.col-4,.b.col-6,.b.col-8{grid-column:span 12}}
+
+/* CARDS */
+.card{background:linear-gradient(180deg,#fff,#ffffff);border:1px solid var(--bd);border-radius:var(--radius);overflow:hidden;margin-bottom:18px;box-shadow:0 8px 18px -8px rgba(15,23,42,.08)}
+.card-hd{padding:14px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px}
+.card-hd h3{font-size:15px;font-weight:700;letter-spacing:-.1px}
+.card-hd .actions{margin-left:auto;display:flex;gap:8px}
+.card-bd{padding:16px 20px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}@media(max-width:960px){.grid-2{grid-column:1fr}}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table.dt{width:100%;border-collapse:collapse}
+table.dt th,table.dt td{padding:12px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--bd);vertical-align:middle}
+table.dt th{background:rgba(241,245,249,.8);backdrop-filter:blur(4px);font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px)}
+table.dt tbody tr{transition:.18s,background .12s}table.dt tbody tr:hover{background:var(--hover)}
+.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+
+/* PILLS */
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+.pill.ok{background:#DCFCE7;color:#166534}.pill.warn{background:#FEF3C7;color:#92400E}.pill.bad{background:#FEE2E2;color:#991B1B}.pill.info{background:#DBEAFE;color:#1E40AF}.pill.acc{background:#CFFAFE;color:#0C4A6E}.pill.gr{background:#F1F5F9;color:#475569}.pill.vio{background:#EDE9FE;color:#5B21B6}
+
+/* BUTTONS */
+.btn{padding:9px 14px;border-radius:10px;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;border:1px solid transparent;transition:transform .15s,box-shadow .15s,background .15s,border-color .15s;white-space:nowrap}
+.btn:hover{transform:translateY(-1px)}.btn:active{transform:translateY(0)}
+.btn.pri{background:var(--pri);color:#fff;border-color:var(--pri)}.btn.pri:hover{background:var(--pri-d);border-color:var(--pri-d);box-shadow:0 10px 18px -8px rgba(2,6,23,.45)}
+.btn.suc{background:var(--success);color:#fff}.btn.suc:hover{background:#059669;box-shadow:0 10px 18px -8px rgba(16,185,129,.45)}
+.btn.dng{background:var(--danger);color:#fff}.btn.dng:hover{background:#B91C1C}
+.btn.acc{background:var(--acc);color:#fff}.btn.acc:hover{background:#0284C7}
+.btn.gh{background:#fff;color:var(--t1);border-color:var(--bd)}.btn.gh:hover{background:var(--hover)}
+.btn.sm{padding:6px 10px;font-size:12px;border-radius:8px;font-weight:600}.btn.icon{width:34px;height:34px;padding:0;justify-content:center;border-radius:9px}
+
+/* FILTERS & PAGER */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}.filters select,.filters input{padding:9px 12px;border:1.5px solid var(--bd);border-radius:10px;background:#fff;font-size:13px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--bd);font-size:12px;color:var(--t2);flex-wrap:wrap}
+.pager button{padding:6px 12px;border:1px solid var(--bd);background:#fff;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:.15s}.pager button:hover:not([disabled]){background:var(--hover)}.pager button[disabled]{opacity:.45;cursor:not-allowed}
+
+/* MODAL */
+.mw{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:24px;z-index:80}
+.mw.open{display:flex}
+.mw-inner{background:#fff;border-radius:18px;width:100%;max-width:620px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);border:1px solid rgba(226,232,240,.8)}
+.mw-inner.wide{max-width:960px}
+.mw-hd{padding:18px 24px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px}.mw-hd h3{font-size:17px;font-weight:700;flex:1;letter-spacing:-.1px}.mw-hd button{color:var(--t2);font-size:18px;padding:4px 8px;border-radius:8px}.mw-hd button:hover{background:var(--hover)}
+.mw-bd{padding:20px 24px;overflow-y:auto;flex:1}.mw-ft{padding:14px 24px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end}
+.fg{margin-bottom:14px}.fg label{display:block;font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px)}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:10px;background:#fff;transition:.15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--acc);background:#fff;box-shadow:0 0 0 4px rgba(14,165,233,.12)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+.empty{text-align:center;padding:44px 20px;color:var(--t3)}.empty i{font-size:36px;margin-bottom:12px;opacity:.6;display:block}
+
+/* CHARTS */
+.chart-wrap{position:relative;height:260px}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--pri);color:#fff;padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow-lg);display:none;z-index:200;border:1px solid rgba(255,255,255,.08)}
+
+/* KANBAN / BOARD */
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.col{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:12px;min-height:280px;display:flex;flex-direction:column;gap:10px}
+.col h4{margin:0;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--t2);display:flex;justify-content:space-between;align-items:center}
+.col .count{background:var(--bg2);padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700}
+.col.drop{outline:2px dashed var(--acc);outline-offset:-6px;background:rgba(14,165,233,.04)}
+.card-item{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:12px 14px;cursor:grab;transition:transform .12s,box-shadow .12s}
+.card-item:hover{transform:translateY(-1px);box-shadow:var(--shadow)}.card-item h5{margin:0 0 4px;font-size:13px;font-weight:700}.card-item small{color:var(--t2);font-size:11.5px}
+.card-item .meta{display:flex;justify-content:space-between;gap:8px;margin-top:6px;align-items:center}
+.pill-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--bg2);color:var(--t2);text-transform:uppercase;letter-spacing:.3px}
+
+/* SIDEBAR RESPONSIVE */
+@media(max-width:920px){.shell{grid-template-columns:1fr}.sidebar{display:none}}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div id="loginScreen" style="position:fixed;inset:0;background:linear-gradient(135deg,#0B1220 0%,#1E293B 45%,#0F172A 100%);display:flex;align-items:center;justify-content:center;padding:24px;z-index:100;color:#fff">
+  <div style="width:100%;max-width:420px;background:#fff;border-radius:22px;overflow:hidden;box-shadow:var(--shadow-lg)">
+    <div style="padding:34px 30px 18px;text-align:center;background:linear-gradient(180deg,#F8FAFC,#fff);border-bottom:1px solid var(--bd)">
+      <div style="width:56px;height:56px;background:linear-gradient(135deg,#0EA5E9,#8B5CF6);color:#fff;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px;box-shadow:0 12px 22px -8px rgba(139,92,246,.45)">W</div>
+      <h1 style="font-size:22px;font-weight:800;letter-spacing:-.3px">ISP ERP</h1>
+      <p style="color:var(--t2);font-size:13px;margin-top:6px">Enter your email to receive a one-time code.</p>
+    </div>
+    <div style="padding:24px 28px 28px">
+      <div id="loginErr" style="background:#FEE2E2;color:#991B1B;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px;display:none"></div>
+      <div style="margin-bottom:14px"><label style="display:block;font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px">Email</label><input type="email" id="loginEmail" placeholder="you@company.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius:10px;background:#F8FAFC"></div>
+      <button id="sendOtpBtn" style="width:100%;padding:13px;background:linear-gradient(135deg,#0EA5E9,#8B5CF6);color:#fff;border-radius:10px;font-weight:700;margin-top:6px;transition:.15s">Send OTP</button>
+      <div style="margin-top:14px"><label style="display:block;font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px">OTP</label><input type="text" id="loginOtp" placeholder="1234" style="width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius:10px;background:#F8FAFC"></div>
+      <button id="verifyOtpBtn" style="width:100%;padding:13px;background:var(--pri);color:#fff;border-radius:10px;font-weight:700;margin-top:12px;transition:.15s">Verify & Sign In</button>
+      <div style="margin-top:16px;padding:12px 14px;background:#F8FAFC;border-radius:10px;font-size:12px;color:var(--t2);line-height:1.55">
+        <b style="color:var(--t1)">Demo:</b><br>
+        super@isp.com | admin@isp.com | acc@isp.com | col1@isp.com | col2@isp.com
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="shell hidden">
+  <aside class="sidebar">
+    <div class="sb-brand"><div class="logo">W</div><div><h2>ISP ERP</h2><small>Billing & Operations</small></div></div>
+    <nav class="sb-nav" id="sbNav"></nav>
+    <div class="sb-user"><div class="av" id="userAv">?</div><div class="un"><b id="userName">Loading…</b><span id="userRole"></span></div><button id="logoutBtn" title="Sign out"><i class="fas fa-arrow-right-from-bracket"></i></button></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div class="brand"><span class="dot"></span><h1 id="pageTitle">Dashboard</h1></div>
+      <div class="sp">
+        <button class="iconbtn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="badge hidden" id="notifBadge">0</span></button>
+        <button class="iconbtn" id="themeBtn" title="Toggle theme"><i class="fas fa-circle-half-stroke"></i></button>
+        <button class="iconbtn" onclick="location.reload()" title="Refresh"><i class="fas fa-rotate"></i></button>
+      </div>
+      <div class="notif-pop" id="notifPop"></div>
+    </header>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<div class="mw" id="mw"><div class="mw-inner" id="mwInner">
+  <div class="mw-hd"><h3 id="mwTitle">—</h3><button onclick="closeM()"><i class="fas fa-xmark"></i></button></div>
+  <div class="mw-bd" id="mwBody"></div>
+  <div class="mw-ft" id="mwFoot"></div>
+</div></div>
+<div id="toast"></div>
+
+<script>
+/* ══════════ STATE ══════════ */
+const state = { me:null, config:{}, modules:{}, packages:[], areas:[], bankAccounts:[], vendors:[], view:'',
+  cache:new Map(), page:{Customers:1,Invoices:1,Payments:1,Leads:1,Complaints:1,Collections:1,Expenses:1},
+  size:{Customers:25,Invoices:25,Payments:25,Leads:25,Complaints:25,Collections:25,Expenses:25},
+  sort:{ Customers:{key:'createdAt',dir:'desc'},Invoices:{key:'createdAt',dir:'desc'} }, filters:{}, notifs:[] };
+
+console = { ...(typeof console!=='undefined'?console:{}) };
+if (!console.log) console.log = function(){};
+if (!console.warn) console.warn = function(){};
+if (!console.error) console.error = function(){};
+
+function call(fn, ...args){
+  return new Promise(resolve => {
+    let finished = false;
+    const done = r => {
+      if (finished) return;
+      finished = true;
+      console.log('[call][finish]', fn, r);
+      resolve(r || { success:false, error:'empty response' });
+    };
+    const fail = err => {
+      if (finished) return;
+      finished = true;
+      console.error('[call][fail]', fn, err);
+      resolve({ success:false, error: err && err.message ? err.message : String(err) });
+    };
+    console.log('[call][start]', fn, args);
+    try {
+      const api = (typeof google !== 'undefined' && google.script && google.script.run) ? google.script.run : null;
+      if (!api) {
+        throw new Error('google.script.run is not available here. Open this page in the deployed Web App URL, not as a local file.');
+      }
+      api
+        .withSuccessHandler(done)
+        .withFailureHandler(fail)
+        [fn](...args);
+    } catch (e) {
+      console.error('[call][immediate]', fn, e);
+      fail(e);
+    }
+  });
+}
+
+const NAV = {
+  'Super Admin': [{p:'dashboard',i:'fa-gauge-high',t:'Dashboard'}, {p:'customers',i:'fa-address-book',t:'Customers'}, {p:'billing',i:'fa-file-invoice',t:'Billing'}, {p:'payments',i:'fa-money-bill-transfer',t:'Payments'}, {p:'leads',i:'fa-filter',t:'Leads'}, {p:'complaints',i:'fa-comments',t:'Complaints'}, {p:'collections',i:'fa-building-columns',t:'Collections'}, {p:'finance',i:'fa-receipt',t:'Finance'}, {p:'reports',i:'fa-chart-line',t:'Reports'}, {p:'settings',i:'fa-gear',t:'Settings'}],
+  'Admin': [{p:'dashboard',i:'fa-gauge-high',t:'Dashboard'}, {p:'customers',i:'fa-address-book',t:'Customers'}, {p:'billing',i:'fa-file-invoice',t:'Billing'}, {p:'payments',i:'fa-money-bill-transfer',t:'Payments'}, {p:'leads',i:'fa-filter',t:'Leads'}, {p:'complaints',i:'fa-comments',t:'Complaints'}, {p:'collections',i:'fa-building-columns',t:'Collections'}, {p:'finance',i:'fa-receipt',t:'Finance'}, {p:'reports',i:'fa-chart-line',t:'Reports'}, {p:'settings',i:'fa-gear',t:'Settings'}],
+  'Accountant': [{p:'dashboard',i:'fa-gauge-high',t:'Dashboard'}, {p:'customers',i:'fa-address-book',t:'Customers'}, {p:'billing',i:'fa-file-invoice',t:'Billing'}, {p:'payments',i:'fa-money-bill-transfer',t:'Payments'}, {p:'finance',i:'fa-receipt',t:'Finance'}, {p:'reports',i:'fa-chart-line',t:'Reports'}],
+  'Collector': [{p:'dashboard',i:'fa-gauge-high',t:'Dashboard'}, {p:'customers',i:'fa-address-book',t:'Customers'}, {p:'payments',i:'fa-money-bill-transfer',t:'Payments'}, {p:'collections',i:'fa-building-columns',t:'Collections'}]
+};
+const TITLES = { dashboard:'Dashboard', customers:'Customers', billing:'Billing Engine', payments:'Payments', leads:'Leads', complaints:'Complaints', collections:'Collections', finance:'Finance', reports:'Reports', settings:'Settings', qr:'QR Check-In' };
+const INVOICE_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const PAYMENT_METHODS = ['Cash','UPI','Bank Transfer','Cheque','Card','Wallet'];
+console.log('[globals]', new Date().toISOString(), { NAV, TITLES, INVOICE_MONTHS, PAYMENT_METHODS });
+
+/* ══════════ BOOT ══════════ */
+(async function boot(){
+  console.log('[boot][start]');
+  progStart();
+  let r;
+  try {
+    r = await call('bootstrap');
+  } catch (bootErr) {
+    console.error('[boot][exception]', bootErr);
+    document.getElementById('loginErr').textContent = 'Unexpected error during startup: ' + String(bootErr);
+    document.getElementById('loginErr').style.display = 'block';
+    progDone();
+    return;
+  }
+  console.log('[boot][bootstrap-result]', r);
+  state.me = r && r.data && r.data.me ? r.data.me : null;
+  state.config = r && r.data && r.data.config ? r.data.config : {};
+  state.modules = r && r.data && r.data.modules ? r.data.modules : {};
+  state.packages = r && r.data && r.data.packages ? r.data.packages : [];
+  state.areas = r && r.data && r.data.areas ? r.data.areas : [];
+  state.bankAccounts = r && r.data && r.data.bankAccounts ? r.data.bankAccounts : [];
+  state.vendors = r && r.data && r.data.vendors ? r.data.vendors : [];
+
+  if (!r.success || !state.me) {
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('loginScreen').style.display = 'flex';
+    const err = document.getElementById('loginErr');
+    err.textContent = r && r.error ? r.error : 'Please sign in to continue.';
+    err.style.display = 'block';
+    progDone();
+    return;
+  }
+
+  const items = NAV[state.me.role] || NAV['Collector'];
+  document.getElementById('userName').textContent = state.me.name || state.me.email;
+  document.getElementById('userRole').textContent = state.me.role;
+  document.getElementById('userAv').textContent = (state.me.name||state.me.email||'?').charAt(0).toUpperCase();
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').classList.remove('hidden');
+  buildNav(items); renderNotifBadge();
+  navigateTo(items[0].p);
+  document.getElementById('logoutBtn').addEventListener('click', async ()=>{ const r2=await call('signOut'); if(r2.success){ location.reload(); } });
+  progDone();
+})();
+function buildNav(items){
+  document.getElementById('sbNav').innerHTML = '<div class="sb-section">' + esc(state.me.role) + ' Console</div>' + items.map(n=>`<div class="sb-item" data-page="${n.p}"><i class="fas ${n.i}"></i>${n.t}${n.badge?'<span class="badge hidden" data-badge="'+n.p+'">0</span>':''}</div>`).join('');
+  document.getElementById('sbNav').addEventListener('click', e=>{ const it=e.target.closest('.sb-item'); if(it) navigateTo(it.dataset.page); });
+}
+function navigateTo(page){ state.view=page; document.querySelectorAll('.sb-item').forEach(x=>x.classList.toggle('active',x.dataset.page===page)); document.getElementById('pageTitle').textContent=TITLES[page]||page; render(); }
+
+/* ══════════ NOTIFICATIONS ══════════ */
+async function renderNotifBadge(){
+  const openComplaints = await getFilteredCount('Complaints', { status:'Open' });
+  const badge = document.querySelector('[data-badge="complaints"]');
+  if (badge){ badge.textContent = openComplaints; if(openComplaints) badge.classList.remove('hidden'); else badge.classList.add('hidden'); }
+}
+async function getFilteredCount(entity, filters){ const r = await call('getPagedData', entity, 1, 1000, filters); return r.success ? (r.data.rows||[]).length : 0; }
+
+/* ══════════ PAGINATION ══════════ */
+function pg(entity){ if(!state.page[entity]) state.page[entity]=1; if(!state.size[entity]) state.size[entity]=25; if(!state.sort[entity]) state.sort[entity]={key:'createdAt',dir:'desc'}; if(!state.filters[entity]) state.filters[entity]={}; }
+async function fetchPage(entity){ pg(entity); const r = await call('getPagedData', entity, state.page[entity], state.size[entity], state.filters[entity], state.sort[entity].key, state.sort[entity].dir); if(!r.success) return {rows:[],total:0,page:1,pageSize:state.size[entity]}; return r.data; }
+function pagerHtml(entity,data){ const tp=Math.max(1,Math.ceil(data.total/data.pageSize)); const from=data.total?(data.page-1)*data.pageSize+1:0,to=Math.min(data.total,data.page*data.pageSize);
+  return `<div class="pager"><div>Showing <b>${from}</b>–<b>${to}</b> of <b>${data.total}</b></div><div style="display:flex;gap:6px;align-items:center">
+    <select onchange="setSize('${entity}',this.value)">${[10,20,25,50,100].map(n=>`<option ${n===data.pageSize?'selected':''}>${n}</option>`).join('')}</select>
+    <button onclick="goPage('${entity}',1)" ${data.page<=1?'disabled':''}>«</button><button onclick="goPage('${entity}',${data.page-1})" ${data.page<=1?'disabled':''}>‹</button>
+    <span><b>${data.page}</b> / ${tp}</span><button onclick="goPage('${entity}',${data.page+1})" ${data.page>=tp?'disabled':''}>›</button><button onclick="goPage('${entity}',${tp})" ${data.page>=tp?'disabled':''}>»</button></div></div>`; }
+function goPage(e,n){ state.page[e]=Math.max(1,n); render(); }
+function setSize(e,n){ state.size[e]=Number(n); state.page[e]=1; render(); }
+
+/* ══════════ HELPERS ══════════ */
+function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtCurrency(n){ const sym=(state.config['currency.symbol']||'₹'); return sym + Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2}); }
+function fmtDate(v){ if(!v) return '—'; try{ return new Date(v).toISOString().split('T')[0]; }catch(e){ return v; } }
+function progStart(){ const b=document.getElementById('prog'); b.classList.remove('done'); b.style.width='20%'; setTimeout(()=>b.style.width='70%',220); }
+function progDone(){ const b=document.getElementById('prog'); b.style.width='100%'; setTimeout(()=>b.classList.add('done'),260); setTimeout(()=>b.style.width='0',650); }
+function toast(msg,ms=2600){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._to); t._to=setTimeout(()=>t.style.display='none',ms); }
+function openM(title, bodyHtml, footHtml, wide){ document.getElementById('mwTitle').textContent=title; document.getElementById('mwBody').innerHTML=bodyHtml; document.getElementById('mwFoot').innerHTML=footHtml||''; document.getElementById('mwInner').classList.toggle('wide',!!wide); document.getElementById('mw').classList.add('open'); }
+function closeM(){ document.getElementById('mw').classList.remove('open'); }
+document.getElementById('mw').addEventListener('click', e=>{ if(e.target.id==='mw') closeM(); });
+function download(filename, text){ const blob=new Blob([text],{type:'text/plain;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
+function statusPill(s){ const m={'Active':'ok','Inactive':'bad','Unpaid':'warn','Paid':'ok','Overdue':'bad','Open':'warn','In Progress':'info','Resolved':'ok','New':'info','Contacted':'warn','Won':'ok','Lost':'bad'}; return `<span class="pill ${m[s]||'gr'}">${esc(s)}</span>`; }
+function whatsappLink(phone, text){ const num = String(phone||'').replace(/\D/g,''); const msg = encodeURIComponent(text||'Hello'); return `https://wa.me/${num}?text=${msg}`; }
+function telLink(phone){ return `tel:${phone}`; }
+
+function render(){ const el=document.getElementById('content'); const map={ dashboard:renderDashboard, customers:renderCustomers, billing:renderBilling, payments:renderPayments, leads:renderLeads, complaints:renderComplaints, collections:renderCollections, finance:renderFinance, reports:renderReports, settings:renderSettings }; (map[state.view]||(()=>{ el.innerHTML=''; }))(el); }
+
+/* ══════════ LOGIN ══════════ */
+document.getElementById('sendOtpBtn').addEventListener('click', async ()=>{ progStart(); const err=document.getElementById('loginErr'); err.style.display='none'; const r=await call('sendOtp', document.getElementById('loginEmail').value); progDone(); if(!r.success){ err.textContent=r.error||'Failed'; err.style.display='block'; } else { err.textContent=''; err.style.display='none'; toast('OTP sent'); } });
+document.getElementById('verifyOtpBtn').addEventListener('click', async ()=>{ progStart(); const err=document.getElementById('loginErr'); err.style.display='none'; const r=await call('verifyOtp', document.getElementById('loginEmail').value, document.getElementById('loginOtp').value); progDone(); if(!r.success){ err.textContent=r.error||'Invalid'; err.style.display='block'; toast(r.error||'Invalid'); } else { err.textContent=''; err.style.display='none'; toast('Welcome'); location.reload(); } });
+document.getElementById('themeBtn').addEventListener('click', ()=>{ const b=document.body; if(b.style.filter==='invert(1) hue-rotate(180deg)'){ b.style.filter=''; } else { b.style.filter='invert(1) hue-rotate(180deg)'; } });
+
+/* ══════════ DASHBOARD ══════════ */
+async function renderDashboard(el){
+  progStart(); const r=await call('getDashboard'); progDone(); const d=r.success?(r.data):null; if(!d){ el.innerHTML='<div class="empty"><i class="fas fa-triangle-exclamation"></i><p>Failed to load dashboard.</p></div>'; return; }
+  el.innerHTML=`<div class="bento">
+    <div class="b col-3"><div class="glow" style="background:#3B82F6"></div><div class="label">Customers</div><div class="value">${d.customers}</div><div class="delta">Active base</div></div>
+    <div class="b col-3"><div class="glow" style="background:#10B981"></div><div class="label">This Month Revenue</div><div class="value">${fmtCurrency(d.monthlyRevenue)}</div><div class="delta">Paid invoices only</div></div>
+    <div class="b col-3"><div class="glow" style="background:#F59E0B"></div><div class="label">Overdue Amount</div><div class="value">${fmtCurrency(d.overdueAmount)}</div><div class="delta">Action needed</div></div>
+    <div class="b col-3"><div class="glow" style="background:#EF4444"></div><div class="label">Open Complaints</div><div class="value">${d.openComplaints}</div><div class="delta">${d.unpaidInvoices} unpaid invoices</div></div>
+    <div class="b col-12 card"><div class="card-hd"><h3>Revenue & Collections</h3></div><div class="card-bd"><div class="chart-wrap"><canvas id="dashChart"></canvas></div></div></div>
+    <div class="b col-6 card"><div class="card-hd"><h3>New Leads This Month</h3><div class="actions"><span class="pill acc">${d.newLeads} new</span></div></div><div class="card-bd"><canvas id="leadChart"></canvas></div></div>
+    <div class="b col-6 card"><div class="card-hd"><h3>Recent Invoices</h3><div class="actions"><button class="btn sm gh" onclick="loadcsv('invoices')"><i class="fas fa-download"></i> CSV</button></div></div><div class="card-bd tbl-wrap">${renderInvoiceTable(d.recentInvoices||[])}</div></div>
+  </div>`;
+  const ctx=document.getElementById('dashChart').getContext('2d'); new Chart(ctx,{type:'bar',data:{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul'],datasets:[{label:'Revenue',data:[12000,15000,9000,18000,21000,17000,d.monthlyRevenue||0],backgroundColor:'rgba(14,165,233,.9)',borderRadius:8},{label:'Expenses',data:[4000,3500,4500,5000,4200,4800,0],backgroundColor:'rgba(139,92,246,.9)',borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});
+  const ctx2=document.getElementById('leadChart').getContext('2d'); new Chart(ctx2,{type:'doughnut',data:{labels:['New','Contacted','Won','Lost'],datasets:[{data:[d.newLeads||0,5,3,1],backgroundColor:['#0EA5E9','#F59E0B','#10B981','#EF4444'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom'}}}});
+}
+function renderInvoiceTable(rows){ if(!rows||!rows.length) return '<div class="empty">No invoices</div>'; return '<table class="dt"><thead><tr><th>#</th><th>Customer</th><th class="num">Amount</th><th>Due</th><th>Status</th><th>Month</th></tr></thead><tbody>' + rows.slice(0,10).map(x=>`<tr><td>${esc(x.invoiceNumber)}</td><td>${esc(x.customerId)}</td><td class="num">${fmtCurrency(x.amount)}</td><td>${esc(x.dueDate)}</td><td>${statusPill(x.status)}</td><td>${x.month}/${x.year}</td></tr>`).join('') + '</tbody></table>'; }
+
+/* ══════════ CUSTOMERS ══════════ */
+async function renderCustomers(el){
+  el.innerHTML=`<div class="b col-12 card"><div class="card-hd"><h3>Customers</h3><div class="actions"><button class="btn sm pri" onclick="openCustomerForm()"><i class="fas fa-plus"></i>New Customer</button></div></div><div class="card-bd"><div class="filters"><input id="custSearch" placeholder="Search customers…" oninput="custSearch(this.value)"><select id="areaFilter" onchange="custFilter()"><option value="">All Areas</option>${(state.areas||[]).map(a=>`<option value="${esc(a.name)}">${esc(a.name)}</option>`).join('')}</select></div><div id="custBox" class="tbl-wrap">Loading…</div></div></div>`;
+  loadCustomers();
+}
+async function loadCustomers(){ const data=await fetchPage('Customers'); document.getElementById('custBox').innerHTML='<table class="dt"><thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Area</th><th>Package</th><th>Status</th><th></th></tr></thead><tbody>' + (data.rows||[]).map(x=>`<tr><td>${esc(x.id)}</td><td><b>${esc(x.name)}</b><div style="color:var(--t3);font-size:11px">${esc(x.email)}</div></td><td>${esc(x.phone)}</td><td>${esc(x.area)}</td><td>${esc(x.packageId)}</td><td>${statusPill(x.status)}</td><td style="text-align:right"><button class="btn sm gh" onclick="openLeadFrom('${esc(x.id)}')"><i class="fas fa-user-plus"></i></button></td></tr>`).join('') + '</tbody></table>' + pagerHtml('Customers', data); }
+function custSearch(q){ state.filters['Customers'].name = q; state.page['Customers']=1; render(); }
+function custFilter(){ state.filters['Customers'].area = document.getElementById('areaFilter').value; state.page['Customers']=1; render(); }
+function openCustomerForm(){ openM('New Customer', '<div class="fg-row"><div class="fg"><label>Name</label><input name="name"></div><div class="fg"><label>Phone</label><input name="phone"></div></div><div class="fg"><label>Email</label><input name="email"></div><div class="fg-row"><div class="fg"><label>Area</label><select name="area">' + (state.areas||[]).map(a=>`<option value="${esc(a.name)}">${esc(a.name)}</option>`).join('') + '</select></div><div class="fg"><label>Package</label><select name="packageId">' + (state.packages||[]).map(p=>`<option value="${p.id}">${esc(p.name)} ${esc(p.speed)}</option>`).join('') + '</select></div></div>', '<button class="btn gh" onclick="closeM()">Cancel</button><button class="btn pri" onclick="saveCustomer()">Save</button>'); }
+async function saveCustomer(){ const fd=new FormData(document.querySelector('#mwBody form, #mwBody')||document.getElementById('mwBody')); const data=Object.fromEntries(fd.entries()); const r=await call('addCustomer', data); if(r.success){ closeM(); toast('Customer created'); render(); } else { toast(r.error||'Failed'); } }
+async function openLeadFrom(customerId){ const r=await call('markLeadWon', customerId, state.packages[0]?.id, state.areas[0]?.name); if(!r.success){ toast(r.error||'Failed'); return; } toast('Converted'); render(); }
+
+/* ══════════ BILLING ══════════ */
+async function renderBilling(el){
+  el.innerHTML=`<div class="bento">
+    <div class="b col-12 card"><div class="card-hd"><h3>Run Monthly Billing</h3><div class="actions"><select id="billMonth">${INVOICE_MONTHS.map(m=>`<option value="${m}">${m}</option>`).join('')}</select><input id="billYear" type="number" value="2026" style="width:110px"><button class="btn pri" onclick="runBilling()"><i class="fas fa-bolt"></i>Run Billing</button></div></div><div class="card-bd"><div id="billBox" class="empty">Generate invoices for all active customers. Safe to click once per period — duplicates are blocked.</div></div></div>
+  </div>`;
+}
+async function runBilling(){ const month=document.getElementById('billMonth').value; const year=document.getElementById('billYear').value; const r=await call('runBilling', month, year); const box=document.getElementById('billBox'); if(!r.success){ box.innerHTML=`<div class="empty"><i class="fas fa-circle-exclamation" style="color:var(--danger)"></i><p>${esc(r.error)}</p></div>`; toast(r.error||'Failed'); } else { box.innerHTML=`<div class="b col-12 card"><div class="card-bd">Generated <b>${r.data.invoicesGenerated}</b> invoices for ${month}/${year}. A CSV-ready export is available in Reports.</div></div>`; toast('Billing completed'); render(); } }
+
+/* ══════════ PAYMENTS ══════════ */
+async function renderPayments(el){
+  el.innerHTML=`<div class="b col-12 card"><div class="card-hd"><h3>Payments & Reconciliation</h3><div class="actions"><button class="btn sm pri" onclick="openPaymentForm()"><i class="fas fa-plus"></i>Record Payment</button><button class="btn sm gh" onclick="loadcsv('payments')"><i class="fas fa-download"></i> CSV</button></div></div><div class="card-bd"><div id="payBox"></div></div></div>`;
+  loadPayments();
+}
+async function loadPayments(){ const data=await fetchPage('Payments'); document.getElementById('payBox').innerHTML='<table class="dt"><thead><tr><th>Invoice</th><th>Amount</th><th>Method</th><th>Collector</th><th>Bank</th><th>Date</th></tr></thead><tbody>' + (data.rows||[]).map(x=>`<tr><td>${esc(x.invoiceId)}</td><td class="num">${fmtCurrency(x.amount)}</td><td>${esc(x.method)}</td><td>${esc(x.collector)}</td><td>${esc(x.bankAccount)}</td><td>${esc(x.date)}</td></tr>`).join('') + '</tbody></table>' + pagerHtml('Payments', data); }
+function openPaymentForm(){ openM('Record Payment', '<div class="fg"><label>Invoice</label><input name="invoiceId" list="invList"><datalist id="invList"></datalist></div><div class="fg-row"><div class="fg"><label>Amount</label><input name="amount"></div><div class="fg"><label>Collector</label><input name="collector"></div></div><div class="fg-row"><div class="fg"><label>Method</label><select name="method">' + PAYMENT_METHODS.map(m=>`<option>${m}</option>`).join('') + '</select></div><div class="fg"><label>Bank Account</label><select name="bankAccount">' + (state.bankAccounts||[]).map(b=>`<option value="${esc(b.name)}">${esc(b.name)}</option>`).join('') + '</select></div></div><div class="fg"><label>Date</label><input name="date" type="date" value="' + new Date().toISOString().split('T')[0] + '"></div>', '<button class="btn gh" onclick="closeM()">Cancel</button><button class="btn pri" onclick="savePayment()">Save</button>'); prefillPaymentInvoices(); }
+async function prefillPaymentInvoices(){ const r=await call('getInvoices'); const datalist=document.getElementById('invList'); if(!datalist) return; datalist.innerHTML=(r.data||[]).map(i=>`<option value="${esc(i.id)}" data-amount="${i.amount}">${esc(i.invoiceNumber)} • ${esc(i.customerId)} • ${fmtCurrency(i.amount)}</option>`).join(''); }
+async function savePayment(){ const fd=new FormData((document.querySelector('#mwBody form')||document.getElementById('mwBody'))); const data=Object.fromEntries(fd.entries()); const r=await call('payInvoice', data.invoiceId, data); if(r.success){ closeM(); toast('Payment recorded'); render(); } else { toast(r.error||'Failed'); } }
+
+/* ══════════ LEADS ══════════ */
+async function renderLeads(el){
+  el.innerHTML=`<div class="b col-12 card"><div class="card-hd"><h3>Leads</h3><div class="actions"><button class="btn sm pri" onclick="openLeadForm()"><i class="fas fa-plus"></i>New Lead</button><button class="btn sm gh" onclick="loadcsv('leads')"><i class="fas fa-download"></i> CSV</button></div></div><div class="card-bd"><div id="leadsBox"></div></div></div>`;
+  loadLeads();
+}
+async function loadLeads(){ const data=await fetchPage('Leads'); document.getElementById('leadsBox').innerHTML='<table class="dt"><thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Source</th><th>Medium</th><th>Status</th><th></th></tr></thead><tbody>' + (data.rows||[]).map(x=>`<tr><td>${esc(x.id)}</td><td>${esc(x.name)}</td><td>${esc(x.phone)}</td><td>${esc(x.source)}</td><td>${esc(x.medium)}</td><td>${statusPill(x.status)}</td><td><a href="${whatsappLink(x.phone,'Hi ' + esc(x.name))}" target="_blank" class="btn sm gh" title="WhatsApp"><i class="fab fa-whatsapp"></i></a><a href="${telLink(x.phone)}" class="btn sm gh" title="Call"><i class="fas fa-phone"></i></a></td></tr>`).join('') + '</tbody></table>' + pagerHtml('Leads', data); }
+function openLeadForm(){ openM('New Lead', '<div class="fg-row"><div class="fg"><label>Name</label><input name="name"></div><div class="fg"><label>Phone</label><input name="phone"></div></div><div class="fg"><label>Email</label><input name="email"></div><div class="fg-row"><div class="fg"><label>Source</label><input name="source"></div><div class="fg"><label>Medium</label><input name="medium"></div></div>', '<button class="btn gh" onclick="closeM()">Cancel</button><button class="btn pri" onclick="saveLead()">Save</button>'); }
+async function saveLead(){ const fd=new FormData((document.querySelector('#mwBody form')||document.getElementById('mwBody'))); const data=Object.fromEntries(fd.entries()); const r=await call('addLead', data); if(r.success){ closeM(); toast('Lead saved'); render(); } else { toast(r.error||'Failed'); } }
+
+/* ══════════ COMPLAINTS ══════════ */
+async function renderComplaints(el){
+  el.innerHTML=`<div class="b col-12 card"><div class="card-hd"><h3>Complaints & Ticketing</h3><div class="actions"><button class="btn sm pri" onclick="openComplaintForm()"><i class="fas fa-plus"></i>New Complaint</button><button class="btn sm gh" onclick="loadcsv('complaints')"><i class="fas fa-download"></i> CSV</button></div></div><div class="card-bd"><div id="cmpBox"></div></div></div>`;
+  loadComplaints();
+}
+async function loadComplaints(){ const data=await fetchPage('Complaints'); document.getElementById('cmpBox').innerHTML='<table class="dt"><thead><tr><th>ID</th><th>Customer</th><th>Issue</th><th>Status</th><th>Assigned</th><th>Due</th></tr></thead><tbody>' + (data.rows||[]).map(x=>`<tr><td>${esc(x.id)}</td><td>${esc(x.customerId)}</td><td>${esc(x.issueType)}<div style="color:var(--t3);font-size:11px">${esc(x.description)}</div></td><td>${statusPill(x.status)}</td><td>${esc(x.assignedTo)}</td><td>${esc(x.dueDate)}</td></tr>`).join('') + '</tbody></table>' + pagerHtml('Complaints', data); }
+function openComplaintForm(){ openM('New Complaint', '<div class="fg"><label>Customer ID</label><input name="customerId"></div><div class="fg-row"><div class="fg"><label>Issue</label><input name="issueType"></div><div class="fg"><label>Assignee</label><input name="assignedTo"></div></div><div class="fg"><label>Description</label><textarea name="description"></textarea></div><div class="fg"><label>Due Date</label><input name="dueDate" type="date"></div>', '<button class="btn gh" onclick="closeM()">Cancel</button><button class="btn pri" onclick="saveComplaint()">Save</button>'); }
+async function saveComplaint(){ const fd=new FormData((document.querySelector('#mwBody form')||document.getElementById('mwBody'))); const data=Object.fromEntries(fd.entries()); const r=await call('addComplaint', data); if(r.success){ closeM(); toast('Complaint created'); render(); } else { toast(r.error||'Failed'); } }
+
+/* ══════════ REPORTS ══════════ */
+async function renderReports(el){
+  el.innerHTML=`<div class="bento">
+    <div class="b col-6 card"><div class="card-hd"><h3>Revenue Collections</h3></div><div class="card-bd"><div class="chart-wrap"><canvas id="colChart"></canvas></div></div></div>
+    <div class="b col-6 card"><div class="card-hd"><h3>Expenses</h3></div><div class="card-bd"><div class="chart-wrap"><canvas id="expChart"></canvas></div></div></div>
+    <div class="b col-12 card"><div class="card-hd"><h3>Exports</h3><div class="actions"><button class="btn sm gh" onclick="loadcsv('invoices')"><i class="fas fa-download"></i> Invoices CSV</button><button class="btn sm gh" onclick="loadcsv('payments')"><i class="fas fa-download"></i> Payments CSV</button><button class="btn sm gh" onclick="loadcsv('recovery')"><i class="fas fa-download"></i> Recovery CSV</button><button class="btn sm gh" onclick="loadcsv('collections')"><i class="fas fa-download"></i> Collections CSV</button><button class="btn sm gh" onclick="loadcsv('expenses')"><i class="fas fa-download"></i> Expenses CSV</button></div></div></div>
+  </div>`;
+  const payments = await fetchPage('Payments'); const expenses = await fetchPage('Expenses'); const collections = await fetchPage('Collections');
+  const ctx1=document.getElementById('colChart').getContext('2d'); new Chart(ctx1,{type:'bar',data:{labels:(collections.rows||[]).slice(0,8).map(x=>x.date||''),datasets:[{label:'Cash',data:(collections.rows||[]).slice(0,8).map(x=>x.cashCollected||0),backgroundColor:'#0EA5E9',borderRadius:8},{label:'Online',data:(collections.rows||[]).slice(0,8).map(x=>x.onlineCollected||0),backgroundColor:'#8B5CF6',borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});
+  const ctx2=document.getElementById('expChart').getContext('2d'); new Chart(ctx2,{type:'doughnut',data:{labels:(expenses.rows||[]).slice(0,8).map(x=>x.category||'Other'),datasets:[{data:(expenses.rows||[]).slice(0,8).map(x=>Number(x.amount||0)),backgroundColor:['#0EA5E9','#8B5CF6','#10B981','#F59E0B','#EF4444','#64748B','#14B8A6','#F97316'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom'}}}});
+}
+async function loadcsv(entity){ const r=await call('exportCsv', entity); if(!r.success){ toast(r.error||'Export failed'); return; } download(entity+'.csv', r.data.csv); toast('Downloading CSV'); }
+
+/* ══════════ SETTINGS ══════════ */
+async function renderSettings(el){
+  el.innerHTML=`<div class="bento">
+    <div class="b col-12 card"><div class="card-hd"><h3>App Settings</h3><div class="actions"><button class="btn sm pri" onclick="saveSettings()"><i class="fas fa-check"></i>Save</button></div></div><div class="card-bd" id="settingsBox"></div></div>
+    <div class="b col-12 card"><div class="card-hd"><h3>Branding & Theme</h3><div class="actions"><button class="btn sm pri" onclick="saveBranding()"><i class="fas fa-check"></i>Save</button></div></div><div class="card-bd" id="brandBox"></div></div>
+    <div class="b col-12 card"><div class="card-hd"><h3>Templates</h3><div class="actions"><button class="btn sm pri" onclick="saveTemplates()"><i class="fas fa-check"></i>Save</button></div></div><div class="card-bd" id="tplBox"></div></div>
+  </div>`;
+  loadSettings();
+}
+async function loadSettings(){
+  const config = state.config;
+  document.getElementById('settingsBox').innerHTML = '<div class="fg-row"><div class="fg"><label>App Name</label><input name="app.name" value="'+esc(config['app.name']||'')+'"></div><div class="fg"><label>Company Name</label><input name="company.name" value="'+esc(config['company.name']||'')+'"></div></div><div class="fg-row"><div class="fg"><label>Company Email</label><input name="company.email" value="'+esc(config['company.email']||'')+'"></div><div class="fg"><label>Currency</label><input name="currency.symbol" value="'+esc(config['currency.symbol']||'₹')+'"></div></div><div class="fg-row"><div class="fg"><label>Billing Day</label><input name="billing.day" value="'+esc(config['billing.day']||'1')+'"></div><div class="fg"><label>Due Days</label><input name="billing.dueDays" value="'+esc(config['billing.dueDays']||'15')+'"></div></div>';
+  document.getElementById('brandBox').innerHTML = '<div class="fg-row"><div class="fg"><label>Primary Color</label><input name="theme.primary" value="'+esc(config['theme.primary']||'#0F172A')+'"></div><div class="fg"><label>Accent Color</label><input name="theme.accent" value="'+esc(config['theme.accent']||'#0EA5E9')+'"></div></div><div class="fg"><label>Logo URL</label><input name="branding.logoUrl" value="'+esc(config['branding.logoUrl']||'')+'"></div>';
+  document.getElementById('tplBox').innerHTML = '<div class="fg"><label>WhatsApp Template</label><textarea name="whatsapp.template">'+esc(config['whatsapp.template']||'')+'</textarea><small style="color:var(--t2)">Placeholders: {name}, {invoice}, {amount}, {dueDate}</small></div>';
+}
+async function saveSettings(){ await upsertSettingsFromDom('settingsBox'); toast('Settings saved'); }
+async function saveBranding(){ await upsertSettingsFromDom('brandBox'); toast('Branding saved'); }
+async function saveTemplates(){ await upsertSettingsFromDom('tplBox'); toast('Templates saved'); }
+async function upsertSettingsFromDom(id){ const els=document.getElementById(id).querySelectorAll('input,textarea'); for(const el of els){ const key=el.getAttribute('name'); const value=el.value; await call('upsertSetting', { key, value }); state.config[key]=value; } }
+
+/* ══════════ MISC MODULES (placeholders if role restricts) ══════════ */
+function renderFinance(el){ el.innerHTML=`<div class="bento"><div class="b col-12 card"><div class="card-bd"><div class="filters"><button class="btn sm pri" onclick="openM('Add Expense','<div class=\\'fg\\'><label>Category</label><input name=\\'category\\'></div><div class=\\'fg\\'><label>Payee</label><input name=\\'payee\\'></div><div class=\\'fg\\'><label>Amount</label><input name=\\'amount\\'></div><div class=\\'fg\\'><label>Date</label><input name=\\'date\\' type=\\'date\\'></div>','<button class=\\'btn gh\\' onclick=\\'closeM()\\'>Cancel</button><button class=\\'btn pri\\' onclick=\\'saveExpense()\\'>Save</button>')"><i class=\"fas fa-plus\"></i>Expense</button><button class=\"btn sm gh\" onclick=\"loadcsv('expenses')\"><i class=\"fas fa-download\"></i> CSV</button></div><div id="finBox"></div></div></div></div>`; loadExpenses(); }
+async function loadExpenses(){ const data=await fetchPage('Expenses'); const box=document.getElementById('finBox'); if(!box) return; box.innerHTML='<table class=\"dt\"><thead><tr><th>ID</th><th>Category</th><th>Payee</th><th class=\"num\">Amount</th><th>Date</th></tr></thead><tbody>' + (data.rows||[]).map(x=>`<tr><td>${esc(x.id)}</td><td>${esc(x.category)}</td><td>${esc(x.payee)}</td><td class=\"num\">${fmtCurrency(x.amount)}</td><td>${esc(x.date)}</td></tr>`).join('') + '</tbody></table>' + pagerHtml('Expenses', data); }
+async function saveExpense(){ const fd=new FormData((document.querySelector('#mwBody form')||document.getElementById('mwBody'))); const data=Object.fromEntries(fd.entries()); const r=await call('addExpense', data); if(r.success){ closeM(); toast('Expense added'); render(); } else { toast(r.error||'Failed'); } }
+function renderCollections(el){ el.innerHTML=`<div class="bento"><div class="b col-12 card"><div class="card-bd"><div class="filters"><button class="btn sm pri" onclick="openM('New Run','<div class=\\'fg\\'><label>Date</label><input name=\\'date\\' type=\\'date\\'></div><div class=\\'fg\\'><label>Collector</label><input name=\\'collector\\'></div><div class=\\'fg\\'><label>Opening Balance</label><input name=\\'openingBalance\\'></div><div class=\\'fg\\'><label>Cash Collected</label><input name=\\'cashCollected\\'></div><div class=\\'fg\\'><label>Online Collected</label><input name=\\'onlineCollected\\'></div><div class=\\'fg\\'><label>Expenses</label><input name=\\'expenses\\'></div><div class=\\'fg\\'><label>Bank Deposit</label><input name=\\'bankDeposit\\'></div>','<button class=\\'btn gh\\' onclick=\\'closeM()\\'>Cancel</button><button class=\\'btn pri\\' onclick=\\'saveCollection()\\'>Save</button>')"><i class=\"fas fa-plus\"></i>New Run</button><button class=\"btn sm gh\" onclick=\"loadcsv('collections')\"><i class=\"fas fa-download\"></i> CSV</button></div><div id=\"colBox\"></div></div></div></div>`; loadCollections(); }
+async function loadCollections(){ const data=await fetchPage('Collections'); const box=document.getElementById('colBox'); if(!box) return; box.innerHTML='<table class=\"dt\"><thead><tr><th>ID</th><th>Date</th><th>Collector</th><th class=\"num\">Cash</th><th class=\"num\">Online</th><th class=\"num\">Expenses</th><th class=\"num\">Bank Deposit</th></tr></thead><tbody>' + (data.rows||[]).map(x=>`<tr><td>${esc(x.id)}</td><td>${esc(x.date)}</td><td>${esc(x.collector)}</td><td class="num">${fmtCurrency(x.cashCollected)}</td><td class="num">${fmtCurrency(x.onlineCollected)}</td><td class="num">${fmtCurrency(x.expenses)}</td><td class="num">${fmtCurrency(x.bankDeposit)}</td></tr>`).join('') + '</tbody></table>' + pagerHtml('Collections', data); }
+async function saveCollection(){ const fd=new FormData((document.querySelector('#mwBody form')||document.getElementById('mwBody'))); const data=Object.fromEntries(fd.entries()); const r=await call('addCollectionRun', data); if(r.success){ closeM(); toast('Saved'); render(); } else { toast(r.error||'Failed'); } }
+
+/* ══════════ RESPONSIVE HELPERS ══════════ */
+function setupMobile(){ const isMobile=window.innerWidth<=920; const sb=document.querySelector('.sidebar'); if(sb){ if(isMobile){ sb.style.display='none'; } else { sb.style.display='flex'; } } }
+window.addEventListener('resize', setupMobile);
+setTimeout(setupMobile,50);
+</script>
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GateDesk</title>
+<base target="_top">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+:root{
+  --pri:#0B1220;--pri-d:#020617;--acc:#0EA5E9;--success:#10B981;--warning:#F59E0B;--danger:#E03E3E;--info:#3B82F6;
+  --t1:#0F172A;--t2:#64748B;--t3:#94A3B8;--bg1:#fff;--bg2:#F5F7FA;--hover:#F1F5F9;--bd:#E2E8F0;
+  --shadow:0 4px 6px -1px rgba(0,0,0,.08);--shadow-lg:0 10px 25px -5px rgba(0,0,0,.1);--radius:12px;--radius-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg2);color:var(--t1);font-size:14px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;font-size:14px;outline:none}
+a{color:inherit;text-decoration:none}
+.hidden{display:none!important}
+
+/* Loading — top progress bar + staggered rows */
+#prog{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#0EA5E9,#3B82F6,#8B5CF6);z-index:9999;transition:width .35s cubic-bezier(.4,0,.2,1),opacity .4s;box-shadow:0 0 8px rgba(59,130,246,.5)}
+#prog.done{opacity:0}
+@keyframes rowIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+tbody tr{animation:rowIn .3s ease both}
+.loader{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.shell{display:grid;grid-template-columns:246px 1fr;height:100vh}
+.sidebar{background:var(--pri);color:#fff;display:flex;flex-direction:column;overflow:hidden}
+.sb-brand{padding:20px 22px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-brand .logo{width:38px;height:38px;background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:17px;font-weight:700}
+.sb-brand h2{font-size:15px;font-weight:600}
+.sb-brand small{display:block;color:#94A3B8;font-size:11px}
+.sb-nav{flex:1;overflow-y:auto;padding:12px}
+.sb-section{margin-top:14px;padding:8px 10px 6px;font-size:10.5px;font-weight:600;color:#64748B;letter-spacing:1.2px;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:#CBD5E1;font-weight:500;font-size:13.5px;cursor:pointer;transition:.15s;margin-bottom:2px}
+.sb-item i{width:18px;text-align:center;font-size:14px;color:#94A3B8}
+.sb-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.sb-item.active{background:rgba(255,255,255,.10);color:#fff}
+.sb-item.active i{color:#fff}
+.sb-item .badge{margin-left:auto;background:var(--danger);color:#fff;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.sb-user{padding:14px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px}
+.sb-user .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:600}
+.sb-user .un{flex:1;overflow:hidden}
+.sb-user .un b{display:block;font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-user .un span{color:#94A3B8;font-size:11px}
+
+.main{display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:#fff;border-bottom:1px solid var(--bd);padding:14px 28px;display:flex;align-items:center;gap:16px}
+.topbar h1{font-size:20px;font-weight:700}
+.topbar .sp{margin-left:auto;display:flex;align-items:center;gap:12px}
+.iconbtn{position:relative;width:38px;height:38px;border-radius:9px;border:1.5px solid var(--bd);display:inline-flex;align-items:center;justify-content:center;color:var(--t2)}
+.iconbtn:hover{background:var(--hover)}
+.iconbtn .badge{position:absolute;top:-5px;right:-5px;background:var(--danger);color:#fff;font-size:10px;border-radius:999px;padding:1px 6px;font-weight:700}
+.topbar-btn{padding:9px 14px;background:var(--pri);color:#fff;border-radius:8px;font-weight:500;font-size:13px;display:inline-flex;align-items:center;gap:7px}
+.topbar-btn:hover{background:var(--pri-d)}
+.content{flex:1;overflow-y:auto;padding:24px 28px 60px}
+.page{display:none}.page.active{display:block}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px;margin-bottom:24px}
+.stat{background:#fff;border-radius:var(--radius);padding:18px 20px;border:1px solid var(--bd);transition:.15s}
+.stat:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.stat .icon{width:38px;height:38px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;color:#fff;margin-bottom:12px}
+.stat.pri .icon{background:linear-gradient(135deg,#3B82F6,#6366F1)}
+.stat.suc .icon{background:linear-gradient(135deg,#10B981,#059669)}
+.stat.wrn .icon{background:linear-gradient(135deg,#F59E0B,#D97706)}
+.stat.gr .icon{background:linear-gradient(135deg,#64748B,#475569)}
+.stat.acc .icon{background:linear-gradient(135deg,#0EA5E9,#0284C7)}
+.stat .lbl{color:var(--t2);font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.stat .val{font-size:28px;font-weight:700;margin-top:4px}
+.stat .sub{color:var(--t3);font-size:11.5px;margin-top:4px}
+
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px}
+.card-hd{padding:14px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px}
+.card-hd h3{font-size:15px;font-weight:600}
+.card-hd .actions{margin-left:auto;display:flex;gap:8px}
+.card-bd{padding:16px 20px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+
+.tbl-wrap{overflow-x:auto}
+table.dt{width:100%;border-collapse:collapse}
+table.dt th,table.dt td{padding:11px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--bd);vertical-align:middle}
+table.dt th{background:var(--bg2);font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;cursor:pointer}
+table.dt tbody tr:hover{background:var(--hover)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.pill.ok{background:#DCFCE7;color:#166534}.pill.warn{background:#FEF3C7;color:#92400E}.pill.bad{background:#FEE2E2;color:#991B1B}
+.pill.info{background:#DBEAFE;color:#1E40AF}.pill.gr{background:#F1F5F9;color:#475569}.pill.acc{background:#CFFAFE;color:#0C4A6E}
+
+.btn{padding:9px 14px;border-radius:8px;font-weight:500;font-size:13px;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+.btn.pri{background:var(--pri);color:#fff}.btn.pri:hover{background:var(--pri-d)}
+.btn.suc{background:var(--success);color:#fff}.btn.suc:hover{background:#059669}
+.btn.dng{background:var(--danger);color:#fff}.btn.dng:hover{background:#B91C1C}
+.btn.acc{background:var(--acc);color:#fff}.btn.acc:hover{background:#0284C7}
+.btn.gh{background:#fff;color:var(--t1);border:1.5px solid var(--bd)}.btn.gh:hover{background:var(--hover)}
+.btn.sm{padding:6px 10px;font-size:12px}.btn.icon{width:32px;height:32px;padding:0;justify-content:center}
+
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.filters select,.filters input{padding:9px 12px;border:1.5px solid var(--bd);border-radius:8px;background:#fff;font-size:13px}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--bd);font-size:12px;color:var(--t2);flex-wrap:wrap}
+.pager button{padding:5px 11px;border:1px solid var(--bd);background:#fff;border-radius:6px;cursor:pointer;font-size:12px}
+.pager button:hover:not([disabled]){background:var(--hover)}
+.pager button[disabled]{opacity:.45;cursor:not-allowed}
+
+.mw{position:fixed;inset:0;background:rgba(11,18,32,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:24px;z-index:80}
+.mw.open{display:flex}
+.mw-inner{background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}
+.mw-hd{padding:18px 24px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px}
+.mw-hd h3{font-size:17px;font-weight:600;flex:1}.mw-hd button{color:var(--t2);font-size:18px;padding:4px 8px;border-radius:6px}
+.mw-bd{padding:20px 24px;overflow-y:auto;flex:1}.mw-ft{padding:14px 24px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end}
+.fg{margin-bottom:15px}.fg label{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:8px;background:var(--bg2)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--pri);background:#fff}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.empty{text-align:center;padding:44px 20px;color:var(--t3)}.empty i{font-size:36px;margin-bottom:12px;opacity:.5;display:block}
+.bar-row{display:flex;align-items:center;gap:12px;margin:8px 0}
+.bar-row .lbl{width:70px;font-size:12px;color:var(--t2)}
+.bar-row .bar-wrap{flex:1;background:var(--bg2);border-radius:999px;overflow:hidden;height:14px}
+.bar-row .bar{height:100%;background:linear-gradient(90deg,var(--acc),#0284C7);border-radius:999px;transition:width .8s}
+.bar-row .v{width:36px;text-align:right;font-weight:600;font-size:12px}
+.recent-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--bd);font-size:13px}
+.recent-item:last-child{border:0}
+.recent-item .av{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--bg2);flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;color:var(--t3);font-weight:600}
+.notif-pop{position:absolute;right:24px;top:60px;width:340px;background:#fff;border:1px solid var(--bd);border-radius:12px;box-shadow:var(--shadow-lg);z-index:60;display:none;overflow:hidden}
+.notif-pop.open{display:block}
+.notif-item{padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;gap:10px;cursor:pointer}
+.notif-item:hover{background:var(--hover)}.notif-item .dot{width:8px;height:8px;border-radius:50%;background:var(--warning);margin-top:6px;flex-shrink:0}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--pri);color:#fff;padding:12px 18px;border-radius:10px;font-size:13.5px;font-weight:500;box-shadow:var(--shadow-lg);display:none;z-index:200}
+.undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--pri);color:#fff;padding:12px 18px;border-radius:999px;display:none;gap:14px;align-items:center;box-shadow:var(--shadow-lg);z-index:120}
+.undo-toast.open{display:flex}
+.undo-toast button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 12px;border-radius:999px}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sb-brand"><div class="logo"><i class="fas fa-shield-halved"></i></div><div><h2>GateDesk</h2><small>Visitor Management</small></div></div>
+    <nav class="sb-nav" id="sbNav"></nav>
+    <div class="sb-user"><div class="av" id="userAv">?</div><div class="un"><b id="userName">Loading…</b><span id="userRole"></span></div></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <h1 id="pageTitle">Dashboard</h1>
+      <div class="sp">
+        <button class="iconbtn" id="notifBtn"><i class="fas fa-bell"></i><span class="badge hidden" id="notifBadge">0</span></button>
+        <button class="topbar-btn" onclick="location.reload()"><i class="fas fa-rotate"></i><span>Refresh</span></button>
+      </div>
+      <div class="notif-pop" id="notifPop"></div>
+    </header>
+    <div class="content" id="content"><!-- rendered per role/page --></div>
+  </main>
+</div>
+
+<!-- Manual check-in modal (Guard) -->
+<div class="mw" id="mwManual"><div class="mw-inner">
+  <div class="mw-hd"><h3>Manual Check-In</h3><button onclick="closeM('mwManual')"><i class="fas fa-xmark"></i></button></div>
+  <form id="manualForm"><div class="mw-bd">
+    <div class="fg-row"><div class="fg"><label>Mobile *</label><input name="phone" required maxlength="10"></div><div class="fg"><label>Name *</label><input name="name" required></div></div>
+    <div class="fg-row"><div class="fg"><label>Company</label><input name="company"></div><div class="fg"><label>ID Proof (last 4)</label><input name="idProofLast4" maxlength="4"></div></div>
+    <div class="fg-row"><div class="fg"><label>Host</label><select name="hostId" id="manualHost"></select></div><div class="fg"><label>Purpose</label><input name="purpose"></div></div>
+  </div><div class="mw-ft"><button type="button" class="btn gh" onclick="closeM('mwManual')">Cancel</button><button type="submit" class="btn pri"><i class="fas fa-door-open"></i>Check In (Inside)</button></div></form>
+</div></div>
+
+<!-- Host CRUD modal (Admin) -->
+<div class="mw" id="mwHost"><div class="mw-inner">
+  <div class="mw-hd"><h3 id="hostTitle">New Host</h3><button onclick="closeM('mwHost')"><i class="fas fa-xmark"></i></button></div>
+  <form id="hostForm"><div class="mw-bd">
+    <input type="hidden" name="id">
+    <div class="fg"><label>Name *</label><input name="name" required></div>
+    <div class="fg-row"><div class="fg"><label>Phone</label><input name="phone"></div><div class="fg"><label>Department</label><input name="department"></div></div>
+  </div><div class="mw-ft"><button type="button" class="btn gh" onclick="closeM('mwHost')">Cancel</button><button type="submit" class="btn pri">Save</button></div></form>
+</div></div>
+
+<!-- Visit review modal (Host/Admin) -->
+<div class="mw" id="mwReview"><div class="mw-inner">
+  <div class="mw-hd"><h3 id="reviewTitle">Review Visit</h3><button onclick="closeM('mwReview')"><i class="fas fa-xmark"></i></button></div>
+  <div class="mw-bd" id="reviewBody"></div>
+  <div class="mw-ft"><button class="btn gh" onclick="closeM('mwReview')">Cancel</button><button class="btn dng" id="reviewReject"><i class="fas fa-xmark"></i>Reject</button><button class="btn suc" id="reviewApprove"><i class="fas fa-check"></i>Approve</button></div>
+</div></div>
+
+<div id="toast"></div>
+<div class="undo-toast" id="undoToast"><span id="undoText"></span><button id="undoBtn">Undo</button></div>
+
+
+<script>
+/* ══════════ STATE ══════════ */
+const state = { me:null, config:{}, hosts:[], statuses:[], sources:[], view:'', checkinUrl:'',
+  cache:new Map(), page:{VisitLogs:1}, size:{VisitLogs:25}, sort:{VisitLogs:{key:'createdAt',dir:'desc'}},
+  filters:{VisitLogs:{}}, notifs:[], lastDelete:null };
+
+function call(fn, ...args){
+  return new Promise(resolve => {
+    google.script.run
+      .withSuccessHandler(r => resolve(r || { success:false, error:'empty response' }))
+      .withFailureHandler(err => resolve({ success:false, error: err && err.message ? err.message : String(err) }))
+      [fn].apply(google.script.run, args);
+  });
+}
+/* dev fallback so the page renders even outside Apps Script */
+if (typeof google === 'undefined' || !google.script || !google.script.run) {
+  window.google = { script:{ run:new Proxy({},{ get:()=>function(){ return { withSuccessHandler(cb){ setTimeout(()=>cb({success:false,error:'Not running inside Apps Script'}),0); return this; }, withFailureHandler(){ return this; } }; } }) } };
+}
+
+/* ══════════ NAV DEFINITIONS PER ROLE ══════════ */
+const NAV = {
+  Guard: [ {p:'board',i:'fa-desktop',t:'Live Board'}, {p:'history',i:'fa-clock-rotate-left',t:'Visit History'} ],
+  Host:  [ {p:'approvals',i:'fa-clipboard-check',t:'My Approvals',badge:true}, {p:'history',i:'fa-clock-rotate-left',t:'My Visits'} ],
+  Admin: [ {p:'dashboard',i:'fa-gauge-high',t:'Dashboard'}, {p:'board',i:'fa-desktop',t:'Live Board'}, {p:'approvals',i:'fa-clipboard-check',t:'Approvals',badge:true},
+           {p:'history',i:'fa-clock-rotate-left',t:'Visit History'}, {p:'hosts',i:'fa-users',t:'Hosts'}, {p:'analytics',i:'fa-chart-line',t:'Analytics'},
+           {p:'qr',i:'fa-qrcode',t:'QR Check-In'}, {p:'config',i:'fa-gear',t:'Settings'} ]
+};
+const PAGE_TITLES = { board:'Live Gate Board', history:'Visit History', approvals:'Pending Approvals', dashboard:'Dashboard', hosts:'Host Directory', analytics:'Analytics', qr:'QR Check-In', config:'Settings' };
+
+/* ══════════ BOOT ══════════ */
+(async function boot(){
+  progStart();
+  const r = await call('bootstrap');
+  if (!r.success){ document.getElementById('content').innerHTML = setupNeeded(r.error); progDone(); return; }
+  state.me = r.data.me; state.config = r.data.config||{}; state.hosts = r.data.hosts||[];
+  state.statuses = r.data.statuses||[]; state.sources = r.data.sources||[]; state.checkinUrl = r.data.checkinUrl||'';
+  document.getElementById('userName').textContent = state.me.name || state.me.email;
+  document.getElementById('userRole').textContent = state.me.role;
+  document.getElementById('userAv').textContent = (state.me.name||state.me.email||'?').charAt(0).toUpperCase();
+  buildNav();
+  populateHostSelects();
+  const first = (NAV[state.me.role]||NAV.Guard)[0].p;
+  navigateTo(first);
+  loadNotifs(); setInterval(loadNotifs, 60000);
+  progDone();
+})();
+function setupNeeded(err){ return '<div class="empty"><i class="fas fa-triangle-exclamation"></i><p>Run <b>⚙️ GateDesk → Initialize System</b> from the spreadsheet menu first.</p><p style="font-size:12px;margin-top:8px">'+esc(err||'')+'</p></div>'; }
+
+function buildNav(){
+  const items = NAV[state.me.role] || NAV.Guard;
+  document.getElementById('sbNav').innerHTML = '<div class="sb-section">'+esc(state.me.role)+' Console</div>' +
+    items.map(n => `<div class="sb-item" data-page="${n.p}"><i class="fas ${n.i}"></i>${n.t}${n.badge?'<span class="badge hidden" data-badge="'+n.p+'">0</span>':''}</div>`).join('');
+  document.getElementById('sbNav').addEventListener('click', e => {
+    const it = e.target.closest('.sb-item'); if (!it) return; navigateTo(it.dataset.page);
+  });
+}
+function navigateTo(page){
+  state.view = page;
+  document.querySelectorAll('.sb-item').forEach(x => x.classList.toggle('active', x.dataset.page===page));
+  document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || page;
+  render();
+}
+
+/* ══════════ NOTIFICATIONS ══════════ */
+async function loadNotifs(){
+  // For Host/Admin, pending approvals act as the in-app notifications
+  if (['Host','Admin'].indexOf(state.me.role) === -1){ return; }
+  const r = await call('getPendingApprovals');
+  state.notifs = r.success ? (r.data||[]) : [];
+  const b = document.getElementById('notifBadge');
+  if (state.notifs.length){ b.textContent = state.notifs.length; b.classList.remove('hidden'); } else b.classList.add('hidden');
+  document.querySelectorAll('[data-badge="approvals"]').forEach(el => { if (state.notifs.length){ el.textContent = state.notifs.length; el.classList.remove('hidden'); } else el.classList.add('hidden'); });
+}
+document.getElementById('notifBtn').addEventListener('click', () => {
+  const p = document.getElementById('notifPop'); p.classList.toggle('open');
+  if (!p.classList.contains('open')) return;
+  if (!state.notifs.length){ p.innerHTML = '<div class="empty" style="padding:26px"><i class="fas fa-check"></i>Nothing pending.</div>'; return; }
+  p.innerHTML = state.notifs.map(n => `<div class="notif-item" data-id="${n.id}"><span class="dot"></span><div><div style="font-weight:600">${esc(n.visitorName)}</div><small style="color:var(--t2)">${esc(n.company||'')} · to meet ${esc(n.hostName||'')}</small></div></div>`).join('');
+  p.querySelectorAll('.notif-item').forEach(el => el.addEventListener('click', () => { p.classList.remove('open'); openReview(el.dataset.id); }));
+});
+document.addEventListener('click', e => { const p=document.getElementById('notifPop'); if (!p.contains(e.target) && !document.getElementById('notifBtn').contains(e.target)) p.classList.remove('open'); });
+
+/* ══════════ PAGINATION ENGINE (client cache + prefetch) ══════════ */
+function cacheKey(entity){ const s=state.sort[entity]; return entity+':'+JSON.stringify(state.filters[entity]||{})+':'+(s?s.key+'-'+s.dir:'')+':'+state.page[entity]+':'+state.size[entity]; }
+function cacheGet(k){ const v=state.cache.get(k); if(!v) return null; if(Date.now()-v.ts>60000){ state.cache.delete(k); return null; } return v.data; }
+function cachePut(k,d){ state.cache.set(k,{data:d,ts:Date.now()}); }
+function cacheInvalidate(entity){ Array.from(state.cache.keys()).filter(k=>k.indexOf(entity+':')===0).forEach(k=>state.cache.delete(k)); }
+async function fetchPage(entity){
+  const key = cacheKey(entity); const c = cacheGet(key); if (c) { prefetchNext(entity); return c; }
+  const s = state.sort[entity];
+  const r = await call('getPagedData', entity, state.page[entity], state.size[entity], state.filters[entity]||{}, s.key, s.dir);
+  if (!r.success) return { rows:[], total:0, page:1, pageSize:state.size[entity], error:r.error };
+  cachePut(key, r.data); prefetchNext(entity); return r.data;
+}
+async function prefetchNext(entity){
+  const np = state.page[entity]+1; const s = state.sort[entity];
+  const key = entity+':'+JSON.stringify(state.filters[entity]||{})+':'+(s.key+'-'+s.dir)+':'+np+':'+state.size[entity];
+  if (cacheGet(key)) return;
+  const r = await call('getPagedData', entity, np, state.size[entity], state.filters[entity]||{}, s.key, s.dir);
+  if (r.success && r.data.rows.length) cachePut(key, r.data);
+}
+function pagerHtml(entity, data){
+  const totalPages = Math.max(1, Math.ceil(data.total/data.pageSize));
+  const from = data.total? (data.page-1)*data.pageSize+1 : 0, to = Math.min(data.total, data.page*data.pageSize);
+  return `<div class="pager"><div>Showing <b>${from}</b>–<b>${to}</b> of <b>${data.total}</b></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <select onchange="setSize('${entity}',this.value)">${[10,20,25,50,100].map(n=>`<option ${n===data.pageSize?'selected':''}>${n}</option>`).join('')}</select>
+      <button onclick="goPage('${entity}',1)" ${data.page<=1?'disabled':''}>«</button>
+      <button onclick="goPage('${entity}',${data.page-1})" ${data.page<=1?'disabled':''}>‹</button>
+      <span><b>${data.page}</b> / ${totalPages}</span>
+      <button onclick="goPage('${entity}',${data.page+1})" ${data.page>=totalPages?'disabled':''}>›</button>
+      <button onclick="goPage('${entity}',${totalPages})" ${data.page>=totalPages?'disabled':''}>»</button>
+    </div></div>`;
+}
+function goPage(entity,n){ const tp=1e9; state.page[entity]=Math.max(1,Math.min(n,tp)); render(); }
+function setSize(entity,n){ state.size[entity]=Number(n); state.page[entity]=1; render(); }
+
+/* ══════════ HELPERS ══════════ */
+function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtTime(v){ if(!v) return '—'; try{ const d=new Date(v); return d.toISOString().split('T')[0]+' '+d.toTimeString().slice(0,5); }catch(e){ return v; } }
+function fmtDur(m){ if(!m&&m!==0) return '—'; m=Number(m); if(!m) return '—'; const h=Math.floor(m/60),mm=m%60; return h?(h+'h '+mm+'m'):(mm+'m'); }
+function progStart(){ const b=document.getElementById('prog'); b.classList.remove('done'); b.style.width='25%'; setTimeout(()=>b.style.width='70%',200); }
+function progDone(){ const b=document.getElementById('prog'); b.style.width='100%'; setTimeout(()=>b.classList.add('done'),250); setTimeout(()=>b.style.width='0',700); }
+function toast(msg,ms=2400){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._to); t._to=setTimeout(()=>t.style.display='none',ms); }
+function openM(id){ document.getElementById(id).classList.add('open'); }
+function closeM(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.mw').forEach(m => m.addEventListener('click', e => { if (e.target===m) m.classList.remove('open'); }));
+function statusPill(s){ const map={'Inside':'ok','Checked Out':'gr','Pending Approval':'warn','Approved':'info','Rejected':'bad'}; return `<span class="pill ${map[s]||'gr'}">${esc(s)}</span>`; }
+function populateHostSelects(){
+  const opts = '<option value="">— Host —</option>' + state.hosts.map(h=>`<option value="${h.id}">${esc(h.name)}${h.department?(' · '+esc(h.department)):''}</option>`).join('');
+  const mh = document.getElementById('manualHost'); if (mh) mh.innerHTML = opts;
+}
+function hostName(id){ const h = state.hosts.find(x=>String(x.id)===String(id)); return h?h.name:'—'; }
+</script>
+
+
+<script>
+/* ══════════ RENDER DISPATCHER ══════════ */
+function render(){
+  const el = document.getElementById('content');
+  switch(state.view){
+    case 'board': return renderBoard(el);
+    case 'approvals': return renderApprovals(el);
+    case 'history': return renderHistory(el);
+    case 'dashboard': return renderDashboard(el);
+    case 'hosts': return renderHosts(el);
+    case 'analytics': return renderAnalytics(el);
+    case 'qr': return renderQr(el);
+    case 'config': return renderConfig(el);
+    default: el.innerHTML = '';
+  }
+}
+
+/* ══════════ LIVE BOARD (Guard/Admin) ══════════ */
+async function renderBoard(el){
+  el.innerHTML = `<div class="stats-grid" id="liveStats"></div>
+    <div class="card"><div class="card-hd"><h3>Currently Inside</h3><div class="actions"><button class="btn pri sm" onclick="openManual()"><i class="fas fa-user-plus"></i>Manual Check-In</button></div></div>
+      <div class="tbl-wrap"><table class="dt" id="insideTbl"><thead><tr><th>Visitor</th><th>Company</th><th>Host</th><th>Purpose</th><th>Checked In</th><th></th></tr></thead><tbody></tbody></table></div></div>`;
+  const [c, inside] = await Promise.all([ call('getLiveCounts'), call('getInsideList') ]);
+  const s = c.data||{};
+  const cards = [
+    {icon:'fa-users',klass:'pri',lbl:"Today's Total",val:s.todayTotal||0},
+    {icon:'fa-door-open',klass:'suc',lbl:'Currently Inside',val:s.inside||0},
+    {icon:'fa-right-from-bracket',klass:'gr',lbl:'Checked Out',val:s.checkedOut||0},
+    {icon:'fa-hourglass-half',klass:'wrn',lbl:'Pending Approval',val:s.pending||0}
+  ];
+  document.getElementById('liveStats').innerHTML = cards.map(x=>`<div class="stat ${x.klass}"><div class="icon"><i class="fas ${x.icon}"></i></div><div class="lbl">${x.lbl}</div><div class="val">${x.val}</div></div>`).join('');
+  const rows = (inside.data||[]).map(v=>`<tr>
+    <td><b>${esc(v.visitorName)}</b><div style="color:var(--t3);font-size:11px">${esc(v.visitorPhone)}</div></td>
+    <td>${esc(v.company||'—')}</td><td>${esc(v.hostName||'—')}</td><td>${esc((v.purpose||'').slice(0,30))}</td>
+    <td>${fmtTime(v.checkInTime)}</td>
+    <td><button class="btn sm pri" onclick="doCheckout('${v.id}')"><i class="fas fa-right-from-bracket"></i>Check Out</button></td></tr>`).join('');
+  document.getElementById('insideTbl').querySelector('tbody').innerHTML = rows || '<tr><td colspan="6" class="empty">No visitors inside right now</td></tr>';
+}
+
+/* ══════════ APPROVALS (Host/Admin) ══════════ */
+async function renderApprovals(el){
+  el.innerHTML = '<div id="apprList"><div class="empty"><div class="loader" style="border-top-color:#0B1220;border-color:#cbd5e1;border-top-color:#0B1220"></div></div></div>';
+  const r = await call('getPendingApprovals');
+  const list = r.data||[];
+  document.getElementById('apprList').innerHTML = list.length ? list.map(v=>`
+    <div class="card"><div class="card-bd" style="display:flex;gap:16px;align-items:center">
+      <div class="av" style="width:52px;height:52px;border-radius:12px;background:var(--bg2);display:inline-flex;align-items:center;justify-content:center;overflow:hidden">${v.photoUrl?`<img src="${esc(v.photoUrl)}" style="width:100%;height:100%;object-fit:cover">`:`<i class="fas fa-user" style="color:var(--t3)"></i>`}</div>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:700">${esc(v.visitorName)} <span style="font-weight:400;color:var(--t2);font-size:13px">· ${esc(v.company||'—')}</span></div>
+        <div style="color:var(--t2);font-size:12.5px;margin-top:2px">📞 ${esc(v.visitorPhone)} · to meet <b>${esc(v.hostName)}</b> · ${esc(v.purpose||'')}</div>
+      </div>
+      <button class="btn gh sm" onclick="openReview('${v.id}')"><i class="fas fa-eye"></i>Review</button>
+      <button class="btn dng sm" onclick="doReject('${v.id}')"><i class="fas fa-xmark"></i></button>
+      <button class="btn suc sm" onclick="doApprove('${v.id}')"><i class="fas fa-check"></i>Approve</button>
+    </div></div>`).join('') : '<div class="empty" style="background:#fff;border-radius:12px;padding:60px 20px"><i class="fas fa-check-double"></i>No visitors awaiting approval.</div>';
+}
+
+/* ══════════ HISTORY (all roles) ══════════ */
+async function renderHistory(el){
+  const isAdmin = state.me.role==='Admin';
+  el.innerHTML = `<div class="filters">
+      <input id="hq" placeholder="🔍 Search name / phone / company…" style="min-width:240px" value="${esc((state.filters.VisitLogs._q)||'')}">
+      <select id="hStatus"><option value="">All Status</option>${state.statuses.map(s=>`<option ${state.filters.VisitLogs.status===s?'selected':''}>${s}</option>`).join('')}</select>
+      ${isAdmin?`<select id="hHost"><option value="">All Hosts</option>${state.hosts.map(h=>`<option value="${h.id}" ${String(state.filters.VisitLogs.hostId)===String(h.id)?'selected':''}>${esc(h.name)}</option>`).join('')}</select>
+      <input id="hFrom" type="date" value="${esc(state.filters.VisitLogs._from||'')}"><input id="hTo" type="date" value="${esc(state.filters.VisitLogs._to||'')}">
+      <button class="btn gh sm" onclick="exportCsv()"><i class="fas fa-file-csv"></i>Export CSV</button>`:''}
+    </div>
+    <div class="card"><div class="tbl-wrap"><table class="dt" id="histTbl"><thead><tr><th>Visitor</th><th>Company</th><th>Host</th><th>Purpose</th><th>Status</th><th>Source</th><th>In</th><th>Out</th><th>Duration</th>${isAdmin?'<th></th>':''}</tr></thead><tbody></tbody></table></div><div id="histPager"></div></div>`;
+  const bind = (id,key,ev)=>{ const e=document.getElementById(id); if(e) e.addEventListener(ev||'change',()=>{ state.filters.VisitLogs[key] = e.value; state.page.VisitLogs=1; cacheInvalidate('VisitLogs'); renderHistory(el); }); };
+  bind('hq','_q','input'); bind('hStatus','status'); bind('hHost','hostId'); bind('hFrom','_from'); bind('hTo','_to');
+  const data = await fetchPage('VisitLogs');
+  const rows = (data.rows||[]).map(v=>`<tr>
+    <td><b>${esc(v.visitorName)}</b><div style="color:var(--t3);font-size:11px">${esc(v.visitorPhone)}</div></td>
+    <td>${esc(v.company||'—')}</td><td>${esc(v.hostName||'—')}</td><td>${esc((v.purpose||'').slice(0,30))}</td>
+    <td>${statusPill(v.status)}</td><td style="font-size:11px">${esc(v.source||'')}</td>
+    <td>${fmtTime(v.checkInTime)}</td><td>${fmtTime(v.checkOutTime)}</td><td>${fmtDur(v.durationMins)}</td>
+    ${isAdmin?`<td><button class="btn sm dng icon" onclick="doDelete('${v.id}')"><i class="fas fa-trash"></i></button></td>`:''}</tr>`).join('');
+  const cols = isAdmin?10:9;
+  document.getElementById('histTbl').querySelector('tbody').innerHTML = rows || `<tr><td colspan="${cols}" class="empty">No visits found</td></tr>`;
+  document.getElementById('histPager').innerHTML = pagerHtml('VisitLogs', data);
+}
+
+/* ══════════ DASHBOARD (Admin) ══════════ */
+async function renderDashboard(el){
+  el.innerHTML = `<div class="stats-grid" id="dashStats"></div>
+    <div class="grid-2"><div class="card"><div class="card-hd"><h3>Pending Approvals</h3></div><div class="card-bd" id="dashPending"></div></div>
+    <div class="card"><div class="card-hd"><h3>Currently Inside</h3></div><div class="card-bd" id="dashInside"></div></div></div>`;
+  const [c, pend, inside] = await Promise.all([ call('getLiveCounts'), call('getPendingApprovals'), call('getInsideList') ]);
+  const s = c.data||{};
+  const cards = [
+    {icon:'fa-users',klass:'pri',lbl:"Today's Visitors",val:s.todayTotal||0},
+    {icon:'fa-door-open',klass:'suc',lbl:'Inside Now',val:s.inside||0},
+    {icon:'fa-right-from-bracket',klass:'gr',lbl:'Checked Out',val:s.checkedOut||0},
+    {icon:'fa-hourglass-half',klass:'wrn',lbl:'Pending Approval',val:s.pending||0}
+  ];
+  document.getElementById('dashStats').innerHTML = cards.map(x=>`<div class="stat ${x.klass}"><div class="icon"><i class="fas ${x.icon}"></i></div><div class="lbl">${x.lbl}</div><div class="val">${x.val}</div></div>`).join('');
+  document.getElementById('dashPending').innerHTML = (pend.data||[]).length ? (pend.data||[]).slice(0,6).map(v=>`<div class="recent-item"><div class="av"><i class="fas fa-hourglass-half"></i></div><div style="flex:1"><b>${esc(v.visitorName)}</b> · ${esc(v.company||'')}<div style="color:var(--t3);font-size:11.5px">to meet ${esc(v.hostName)}</div></div><button class="btn sm suc" onclick="openReview('${v.id}')"><i class="fas fa-gavel"></i></button></div>`).join('') : '<div class="empty"><i class="fas fa-check"></i>No pending approvals</div>';
+  document.getElementById('dashInside').innerHTML = (inside.data||[]).length ? (inside.data||[]).slice(0,6).map(v=>`<div class="recent-item"><div class="av">${v.photoUrl?`<img src="${esc(v.photoUrl)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`:esc((v.visitorName||'?').charAt(0))}</div><div style="flex:1"><b>${esc(v.visitorName)}</b> · ${esc(v.company||'')}<div style="color:var(--t3);font-size:11.5px">in since ${fmtTime(v.checkInTime)}</div></div><button class="btn sm pri" onclick="doCheckout('${v.id}')">Out</button></div>`).join('') : '<div class="empty"><i class="fas fa-door-closed"></i>Nobody inside</div>';
+}
+
+/* ══════════ HOSTS (Admin) ══════════ */
+async function renderHosts(el){
+  el.innerHTML = `<div class="card"><div class="card-hd"><h3>Host Directory</h3><div class="actions"><button class="btn pri sm" onclick="openHost()"><i class="fas fa-plus"></i>New Host</button></div></div>
+    <div class="tbl-wrap"><table class="dt" id="hostTbl"><thead><tr><th>Name</th><th>Phone</th><th>Department</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>`;
+  const r = await call('listHosts');
+  document.getElementById('hostTbl').querySelector('tbody').innerHTML = (r.data||[]).map(h=>`<tr>
+    <td><b>${esc(h.name)}</b></td><td>${esc(h.phone||'—')}</td><td>${esc(h.department||'—')}</td>
+    <td><span class="pill ${(h.active===true||String(h.active)==='true')?'ok':'gr'}">${(h.active===true||String(h.active)==='true')?'Active':'Inactive'}</span></td>
+    <td><button class="btn sm gh icon" onclick='editHost(${JSON.stringify(h)})'><i class="fas fa-pen"></i></button><button class="btn sm dng icon" onclick="doDeactivateHost('${h.id}')"><i class="fas fa-user-slash"></i></button></td></tr>`).join('') || '<tr><td colspan="5" class="empty">No hosts</td></tr>';
+}
+
+/* ══════════ ANALYTICS (Admin) ══════════ */
+async function renderAnalytics(el){
+  el.innerHTML = '<div class="stats-grid" id="anStats"></div><div class="card"><div class="card-hd"><h3>Hourly Footfall</h3></div><div class="card-bd" id="anHourly"></div></div>';
+  const r = await call('getAnalytics'); const a = r.data||{};
+  const cards = [
+    {icon:'fa-users',klass:'pri',lbl:'Total Visits',val:a.totalVisits||0},
+    {icon:'fa-clock',klass:'acc',lbl:'Avg Duration',val:fmtDur(a.avgDurationMins)},
+    {icon:'fa-fire',klass:'wrn',lbl:'Busiest Hour',val:(a.busiestHour!=null?(String(a.busiestHour).padStart(2,'0')+':00'):'—'),sub:(a.busiestHourCount||0)+' visits'},
+    {icon:'fa-door-open',klass:'suc',lbl:'Inside Now',val:(a.byStatus&&a.byStatus['Inside'])||0}
+  ];
+  document.getElementById('anStats').innerHTML = cards.map(x=>`<div class="stat ${x.klass}"><div class="icon"><i class="fas ${x.icon}"></i></div><div class="lbl">${x.lbl}</div><div class="val">${x.val}</div><div class="sub">${x.sub||''}</div></div>`).join('');
+  const hrs = (a.hourly||[]).filter(h=>h.count>0); const max = Math.max.apply(null,(hrs.map(h=>h.count)).concat([1]));
+  document.getElementById('anHourly').innerHTML = hrs.length ? hrs.map(h=>`<div class="bar-row"><div class="lbl">${String(h.hour).padStart(2,'0')}:00</div><div class="bar-wrap"><div class="bar" style="width:${Math.round(h.count/max*100)}%"></div></div><div class="v">${h.count}</div></div>`).join('') : '<div class="empty"><i class="fas fa-chart-simple"></i>No data</div>';
+}
+
+/* ══════════ QR (Admin) ══════════ */
+async function renderQr(el){
+  const r = await call('getQrInfo'); const q = r.data||{};
+  el.innerHTML = `<div class="card"><div class="card-bd" style="text-align:center;padding:40px">
+    <h3 style="font-size:20px;margin-bottom:6px">${esc(q.siteName||'GateDesk')}</h3>
+    <p style="color:var(--t2);margin-bottom:20px">Print & display this QR at the gate. Visitors scan it to self-register.</p>
+    ${q.qrImageUrl?`<img src="${esc(q.qrImageUrl)}" style="width:280px;height:280px;border:1px solid var(--bd);border-radius:16px;padding:12px;background:#fff">`:'<div class="empty">Deploy the web app first to generate the check-in URL.</div>'}
+    <div style="margin-top:16px;font-family:'DM Mono',monospace;font-size:12px;color:var(--t2);word-break:break-all">${esc(q.checkinUrl||'')}</div>
+    <div style="margin-top:18px"><button class="btn pri" onclick="window.print()"><i class="fas fa-print"></i>Print QR</button></div>
+  </div></div>`;
+}
+
+/* ══════════ CONFIG (Admin) ══════════ */
+function renderConfig(el){
+  const rows = Object.keys(state.config).sort().map(k=>`<div class="fg-row" style="align-items:end;border-bottom:1px solid var(--bd);padding-bottom:12px;margin-bottom:12px">
+    <div class="fg" style="margin:0"><label>${esc(k)}</label></div>
+    <div class="fg" style="margin:0;display:flex;gap:8px"><input id="cfg_${esc(k)}" value="${esc(state.config[k])}"><button class="btn pri sm" onclick="saveCfg('${esc(k)}')">Save</button></div></div>`).join('');
+  el.innerHTML = `<div class="card"><div class="card-hd"><h3>System Settings</h3></div><div class="card-bd">${rows||'<div class="empty">No config</div>'}</div></div>`;
+}
+async function saveCfg(key){
+  const v = document.getElementById('cfg_'+key).value;
+  const r = await call('updateConfig', key, v);
+  if (r.success){ state.config[key]=v; toast('Saved ✓'); } else Swal.fire({icon:'error',title:'Failed',text:r.error});
+}
+
+/* ══════════ ACTIONS ══════════ */
+function openManual(){ document.getElementById('manualForm').reset(); openM('mwManual'); }
+document.getElementById('manualForm').addEventListener('submit', async e=>{
+  e.preventDefault(); const fd=new FormData(e.target); const d={}; fd.forEach((v,k)=>d[k]=v);
+  const r = await call('guardManualCheckin', d);
+  if (r.success){ closeM('mwManual'); toast('Checked in ✓'); cacheInvalidate('VisitLogs'); render(); loadNotifs(); } else Swal.fire({icon:'error',title:'Failed',text:r.error});
+});
+
+async function doApprove(id){ const r=await call('approveVisit', id, 'In-App'); if(r.success){ toast('Approved ✓ — visitor is now Inside'); cacheInvalidate('VisitLogs'); render(); loadNotifs(); } else Swal.fire({icon:'error',title:'Failed',text:r.error}); }
+async function doReject(id){
+  const c = await Swal.fire({ title:'Reject visitor?', input:'text', inputLabel:'Reason (optional)', showCancelButton:true, confirmButtonText:'Reject', confirmButtonColor:'#dc2626' });
+  if (!c.isConfirmed) return;
+  const r = await call('rejectVisit', id, c.value||''); if(r.success){ toast('Rejected'); cacheInvalidate('VisitLogs'); render(); loadNotifs(); } else Swal.fire({icon:'error',title:'Failed',text:r.error});
+}
+async function doCheckout(id){
+  const c = await Swal.fire({ title:'Check out this visitor?', icon:'question', showCancelButton:true, confirmButtonText:'Check Out', confirmButtonColor:'#0B1220' });
+  if (!c.isConfirmed) return;
+  const r = await call('checkOutVisit', id); if(r.success){ toast('Checked out ✓ Duration '+fmtDur(r.data.durationMins)); cacheInvalidate('VisitLogs'); render(); } else Swal.fire({icon:'error',title:'Failed',text:r.error});
+}
+async function openReview(id){
+  const r = await call('getVisitLog', id); if(!r.success){ Swal.fire({icon:'error',title:'Not found'}); return; }
+  const v = r.data; window._reviewId = id;
+  document.getElementById('reviewTitle').textContent = 'Review · ' + v.visitorName;
+  document.getElementById('reviewBody').innerHTML = `
+    <div style="text-align:center;margin-bottom:14px">${v.photoUrl?`<img src="${esc(v.photoUrl)}" style="width:110px;height:110px;border-radius:14px;object-fit:cover;border:1px solid var(--bd)">`:'<div style="width:110px;height:110px;border-radius:14px;background:var(--bg2);display:inline-flex;align-items:center;justify-content:center;color:var(--t3);font-size:34px"><i class="fas fa-user"></i></div>'}</div>
+    <div style="font-size:13px;line-height:2">
+      <div style="display:flex;justify-content:space-between;border-bottom:1px dashed var(--bd);padding:6px 0"><span style="color:var(--t2)">Company</span><b>${esc(v.company||'—')}</b></div>
+      <div style="display:flex;justify-content:space-between;border-bottom:1px dashed var(--bd);padding:6px 0"><span style="color:var(--t2)">Phone</span><b>${esc(v.visitorPhone)}</b></div>
+      <div style="display:flex;justify-content:space-between;border-bottom:1px dashed var(--bd);padding:6px 0"><span style="color:var(--t2)">Host</span><b>${esc(v.hostName)}</b></div>
+      <div style="display:flex;justify-content:space-between;border-bottom:1px dashed var(--bd);padding:6px 0"><span style="color:var(--t2)">Purpose</span><b>${esc(v.purpose||'—')}</b></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--t2)">ID Proof (last 4)</span><b>${esc(v.idProofLast4||'—')}</b></div>
+    </div>`;
+  openM('mwReview');
+}
+document.getElementById('reviewApprove').addEventListener('click', async ()=>{ const r=await call('approveVisit', window._reviewId, 'In-App'); if(r.success){ closeM('mwReview'); toast('Approved ✓'); cacheInvalidate('VisitLogs'); render(); loadNotifs(); } else Swal.fire({icon:'error',title:'Failed',text:r.error}); });
+document.getElementById('reviewReject').addEventListener('click', async ()=>{ closeM('mwReview'); doReject(window._reviewId); });
+
+/* Hosts */
+function openHost(){ const f=document.getElementById('hostForm'); f.reset(); f.elements.id.value=''; document.getElementById('hostTitle').textContent='New Host'; openM('mwHost'); }
+function editHost(h){ const f=document.getElementById('hostForm'); f.reset(); f.elements.id.value=h.id; f.elements.name.value=h.name||''; f.elements.phone.value=h.phone||''; f.elements.department.value=h.department||''; document.getElementById('hostTitle').textContent='Edit Host'; openM('mwHost'); }
+document.getElementById('hostForm').addEventListener('submit', async e=>{
+  e.preventDefault(); const fd=new FormData(e.target); const d={}; fd.forEach((v,k)=>d[k]=v);
+  const r = d.id ? await call('updateHost', d.id, {name:d.name,phone:d.phone,department:d.department}) : await call('createHost', d);
+  if (r.success){ closeM('mwHost'); toast('Host saved ✓'); state.hosts = (await call('bootstrap')).data.hosts; populateHostSelects(); render(); } else Swal.fire({icon:'error',title:'Failed',text:r.error});
+});
+async function doDeactivateHost(id){ const c=await Swal.fire({title:'Deactivate host?',icon:'warning',showCancelButton:true,confirmButtonText:'Deactivate',confirmButtonColor:'#dc2626'}); if(!c.isConfirmed) return; const r=await call('deactivateHost',id); if(r.success){ toast('Host deactivated'); render(); } else Swal.fire({icon:'error',title:'Failed',text:r.error}); }
+
+/* Soft delete + undo */
+async function doDelete(id){
+  const c = await Swal.fire({ title:'Delete this visit record?', text:'You can undo for 10 seconds.', icon:'warning', showCancelButton:true, confirmButtonText:'Delete', confirmButtonColor:'#dc2626' });
+  if (!c.isConfirmed) return;
+  const r = await call('softDeleteVisit', id);
+  if (!r.success){ Swal.fire({icon:'error',title:'Failed',text:r.error}); return; }
+  cacheInvalidate('VisitLogs'); render(); showUndo(id);
+}
+function showUndo(id){
+  const t=document.getElementById('undoToast'); document.getElementById('undoText').textContent='Visit record deleted'; t.classList.add('open');
+  clearTimeout(state._undoT);
+  const btn=document.getElementById('undoBtn');
+  const h=async()=>{ btn.removeEventListener('click',h); const r=await call('restoreVisit',id); if(r.success){ cacheInvalidate('VisitLogs'); toast('Restored'); render(); } t.classList.remove('open'); };
+  btn.addEventListener('click',h);
+  state._undoT=setTimeout(()=>{ t.classList.remove('open'); btn.removeEventListener('click',h); },10000);
+}
+
+/* CSV export */
+async function exportCsv(){
+  const f = state.filters.VisitLogs||{};
+  const r = await call('exportVisitLogsCsv', { status:f.status, hostId:f.hostId, _from:f._from, _to:f._to });
+  if (!r.success){ Swal.fire({icon:'error',title:'Export failed',text:r.error}); return; }
+  const blob = new Blob([r.data.csv], { type:'text/csv;charset=utf-8;' });
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=r.data.filename; a.click(); URL.revokeObjectURL(a.href);
+  toast('Exported '+r.data.count+' rows');
+}
+</script>
+</body>
+</html>
