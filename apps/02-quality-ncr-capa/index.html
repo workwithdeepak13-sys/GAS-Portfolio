@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quality System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#ffffff;--surface-2:#f1f1ef;--border:#e4e4e0;
+  --text:#1a1a18;--text-2:#6b6b66;--text-3:#9c9c96;
+  --brand:#1e3a5f;--brand-soft:#e8edf3;
+  --ok:#15803d;--ok-soft:#dcf2e3;--warn:#b45309;--warn-soft:#fdf0dc;
+  --danger:#b91c1c;--danger-soft:#fde8e8;--info:#1d4ed8;--info-soft:#e3ebfd;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;font-size:14px;color:var(--text);background:var(--bg);line-height:1.5}
+.mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:220px;background:#191918;flex-shrink:0;position:fixed;top:0;bottom:0;display:flex;flex-direction:column}
+.side-logo{padding:16px;color:#fff;font-weight:600;font-size:14px;border-bottom:1px solid #2a2a28}
+.side-logo span{display:block;color:#a3a39e;font-size:11px;font-weight:400;margin-top:2px}
+.nav{padding:8px 0;flex:1}
+.nav a{display:flex;align-items:center;height:32px;padding:0 16px;color:#a3a39e;text-decoration:none;font-size:13px;border-left:2px solid transparent}
+.nav a:hover{color:#fff;transition:color 120ms ease-out}
+.nav a.active{color:#fff;background:rgba(255,255,255,.06);border-left-color:var(--brand-soft)}
+.nav .grp{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6b6b66;padding:14px 16px 4px}
+.main{flex:1;margin-left:220px;min-width:0}
+.topbar{height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:20}
+.topbar h1{font-size:20px;font-weight:600;flex:1}
+.userchip{font-size:13px;color:var(--text-2)}.userchip b{color:var(--text);font-weight:500}
+#progress{height:2px;position:sticky;top:48px;z-index:20}
+#progress.on{background:linear-gradient(90deg,var(--brand) 30%,var(--brand-soft) 60%,var(--brand) 90%);background-size:200% 100%;animation:prog 1s linear infinite}
+@keyframes prog{from{background-position:200% 0}to{background-position:-200% 0}}
+.content{padding:24px;max-width:1400px;margin:0 auto}
+.purpose{font-size:13px;color:var(--text-2);margin-bottom:16px}
+.kpis{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;flex:1;min-width:150px}
+.kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2)}
+.kpi .val{font-size:28px;font-weight:600;font-family:'JetBrains Mono',monospace;line-height:1.2;margin-top:4px}
+.kpi .sub{font-size:12px;color:var(--text-3)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px}
+.card h2{font-size:16px;font-weight:600;margin-bottom:12px}
+.card h2 .ctx{font-size:12px;font-weight:400;color:var(--text-3);margin-left:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);background:var(--surface-2);text-align:left;padding:8px 10px}
+td{padding:0 10px;height:38px;border-bottom:1px solid var(--border)}
+tr:hover td{background:var(--surface-2)}
+td.num,th.num{text-align:right;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+td.id{color:var(--brand);font-weight:500}
+.pill{display:inline-flex;align-items:center;gap:6px;height:20px;padding:0 8px;border-radius:10px;font-size:11px;font-weight:600}
+.pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.danger{background:var(--danger-soft);color:var(--danger)}.pill.info{background:var(--info-soft);color:var(--info)}
+.pill.grey{background:var(--surface-2);color:var(--text-2)}
+.btn{height:32px;padding:0 14px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}.btn.primary:hover{opacity:.92}
+.btn:disabled{opacity:.5;cursor:default}
+label{display:block;font-size:13px;font-weight:500;margin-bottom:4px}
+label small{color:var(--text-3);font-weight:400}
+input,select,textarea{width:100%;height:36px;padding:0 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;background:var(--surface)}
+textarea{height:auto;padding:8px 10px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px}
+.form{max-width:560px;display:flex;flex-direction:column;gap:12px}
+.frow{display:flex;gap:12px}.frow>div{flex:1}
+.reading{display:flex;gap:12px;align-items:center;padding:10px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px}
+.reading.oos{border-color:var(--danger);background:var(--danger-soft)}
+.reading .spec{font-size:12px;color:var(--text-2);font-family:'JetBrains Mono',monospace}
+.reading input{width:110px}
+#toasts{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:100}
+.toast{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--ok);border-radius:6px;padding:10px 14px;font-size:13px;min-width:260px}
+.toast.err{border-left-color:var(--danger)}
+.view{display:none}.view.active{display:block}
+.about-nav{position:sticky;top:64px;float:left;width:180px;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.about-nav a{display:block;padding:6px 0;color:var(--text-2);text-decoration:none}
+.about-nav a:hover{color:var(--brand)}
+.about-body{margin-left:200px}
+.formula{font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin:8px 0}
+.logic-card{border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;background:var(--surface)}
+.logic-card h4{font-size:14px;font-weight:600;margin-bottom:6px}
+.logic-card p{font-size:13px;color:var(--text-2);margin:4px 0}
+.arch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+.arch .box{border:1px solid var(--border);background:var(--surface-2);border-radius:6px;padding:8px 12px;font-size:12px;font-weight:500}
+.arch .arr{color:var(--text-3)}
+.hbar{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.hbar .track{flex:1;height:14px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.hbar .track i{display:block;height:100%;background:var(--brand)}
+.hbar .k{width:110px;color:var(--text-2)}.hbar .v{width:90px;text-align:right;font-family:'JetBrains Mono',monospace}
+@media print{.sidebar,.topbar,#progress,.about-nav,.btn{display:none!important}.main{margin:0}.about-body{margin:0}.logic-card{break-inside:avoid}}
+@media (max-width:768px){.sidebar{display:none}.main{margin-left:0}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="side-logo">Quality System<span>Inspect · Disposition · Correct</span></div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+  <div class="main">
+    <div class="topbar"><h1 id="pageTitle">Dashboard</h1><div class="userchip"><b id="uName">—</b> <span id="uRole"></span></div></div>
+    <div id="progress"></div>
+    <div class="content">
+
+      <section class="view active" id="view-dashboard">
+        <p class="purpose">What needs your attention today: open NCRs, dispositions waiting, overdue corrective actions, repeat-defect alerts.</p>
+        <div class="kpis" id="kpis"></div>
+        <div class="card"><h2>Needs attention <span class="ctx">open NCRs and pending dispositions</span></h2>
+          <table><thead><tr><th>NCR</th><th>Item</th><th>Defect</th><th class="num">Qty</th><th>Disposition</th><th>Status</th><th></th></tr></thead><tbody id="attnBody"></tbody></table>
+        </div>
+        <div class="card"><h2>Repeat-defect alerts <span class="ctx">the quarterly-repeat cycle breaker</span></h2>
+          <table><thead><tr><th>Alert</th><th>Defect</th><th>Item</th><th class="num">Times</th><th class="num">Window</th><th>Status</th></tr></thead><tbody id="repeatBody"></tbody></table>
+        </div>
+      </section>
+
+      <section class="view" id="view-inspect">
+        <p class="purpose">Pick stage + item — the plan loads with spec limits. Out-of-spec readings highlight instantly; result is computed by rule, not opinion.</p>
+        <div class="card"><h2>New inspection</h2>
+          <div class="form" style="max-width:720px">
+            <div class="frow">
+              <div><label>Stage</label><select id="iStage" onchange="loadPlan()"><option>incoming</option><option>in-process</option><option>final</option></select></div>
+              <div><label>Item</label><select id="iItem" onchange="loadPlan()"></select></div>
+              <div><label>Supplier <small>(incoming only)</small></label><select id="iSupplier"></select></div>
+            </div>
+            <div class="frow">
+              <div><label>Lot no</label><input id="iLot" placeholder="LOT-1234"></div>
+              <div><label>Lot qty</label><input id="iLotQty" type="number" min="1" value="500"></div>
+              <div><label>Machine <small>(in-process)</small></label><input id="iMachine" placeholder="M-01"></div>
+            </div>
+            <div id="planReadings"></div>
+            <button class="btn primary" id="btnInspect" onclick="submitInspection()">Record inspection result</button>
+          </div>
+        </div>
+        <div class="card" id="ncrPanel" style="display:none;border-color:var(--danger)">
+          <h2 style="color:var(--danger)">Lot FAILED — NCR required <span class="ctx">lot is now on Quality Hold</span></h2>
+          <div class="form">
+            <div class="frow">
+              <div><label>Defect code</label><select id="nDefect"></select></div>
+              <div><label>Qty affected</label><input id="nQty" type="number" min="1"></div>
+              <div><label>Proposed disposition</label><select id="nDisp"><option>rework</option><option>reject</option><option>use-as-is</option><option>return-to-supplier</option></select></div>
+            </div>
+            <div><label>Notes</label><input id="nNotes" placeholder="Photo reference, observations"></div>
+            <button class="btn primary" onclick="createNcr()">Raise NCR</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-ncrs">
+        <p class="purpose">NCR register. Dispositions require approval per the authority matrix; pending &gt;48h escalate automatically.</p>
+        <div class="card">
+          <div style="display:flex;gap:12px;margin-bottom:12px">
+            <input id="ncrSearch" placeholder="Search NCRs…" style="max-width:260px" oninput="loadNcrs()">
+            <select id="ncrStatus" style="max-width:160px" onchange="loadNcrs()"><option value="">All statuses</option><option>open</option><option>closed</option></select>
+            <button class="btn" onclick="exportCsv('NCRs')">Export CSV</button>
+          </div>
+          <table><thead><tr><th>NCR</th><th>Date</th><th>Item</th><th>Defect</th><th class="num">Qty</th><th>Disposition</th><th class="num">Cost ₹</th><th>Status</th><th></th></tr></thead><tbody id="ncrBody"></tbody></table>
+        </div>
+      </section>
+
+      <section class="view" id="view-capa">
+        <p class="purpose">CAPA cannot reach "Action Defined" until all five Whys are filled. Closed CAPAs get an automatic effectiveness check after 30 days.</p>
+        <div class="card"><h2>New / edit CAPA</h2>
+          <div class="form" style="max-width:720px">
+            <div class="frow">
+              <div><label>CAPA ID <small>(blank = new)</small></label><input id="cId" placeholder=""></div>
+              <div><label>NCR reference</label><input id="cNcr" placeholder="NCR-2026-0001"></div>
+            </div>
+            <div><label>Problem statement</label><input id="cProblem"></div>
+            <div class="frow"><div><label>Why 1</label><input id="cW1"></div><div><label>Why 2</label><input id="cW2"></div></div>
+            <div class="frow"><div><label>Why 3</label><input id="cW3"></div><div><label>Why 4</label><input id="cW4"></div></div>
+            <div><label>Why 5 <small>root cause</small></label><input id="cW5"></div>
+            <div><label>Corrective action</label><textarea id="cAction" rows="2"></textarea></div>
+            <div class="frow">
+              <div><label>Responsible (email)</label><input id="cResp"></div>
+              <div><label>Target date</label><input id="cTarget" type="date"></div>
+              <div><label>Status</label><select id="cStatus"><option>draft</option><option>action-defined</option></select></div>
+            </div>
+            <button class="btn primary" onclick="saveCapa()">Save CAPA</button>
+          </div>
+        </div>
+        <div class="card"><h2>CAPA register</h2>
+          <table><thead><tr><th>CAPA</th><th>NCR</th><th>Problem</th><th>Responsible</th><th>Target</th><th>Status</th><th></th></tr></thead><tbody id="capaBody"></tbody></table>
+        </div>
+      </section>
+
+      <section class="view" id="view-suppliers">
+        <p class="purpose">Incoming inspection data rolled into per-supplier metrics — the one-pager for the vendor meeting.</p>
+        <div class="card"><h2>Supplier scorecards <span class="ctx">from incoming inspections, all time</span></h2>
+          <table><thead><tr><th>Supplier</th><th class="num">Lots</th><th class="num">Acceptance %</th><th class="num">PPM defective</th><th>Top defects</th></tr></thead><tbody id="supBody"></tbody></table>
+          <div style="margin-top:12px"><button class="btn" onclick="window.print()">Print supplier report</button></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-copq">
+        <p class="purpose">What quality is actually costing, and where. Rejection ₹120/unit · rework ₹45/unit (Config-driven rates).</p>
+        <div class="kpis" id="copqKpis"></div>
+        <div class="card"><h2>Cost by defect code <span class="ctx">all time, top 8</span></h2><div id="copqDefects"></div></div>
+        <div class="card"><h2>Cost by month <span class="ctx">trend</span></h2><div id="copqMonths"></div></div>
+      </section>
+
+      <section class="view" id="view-binder">
+        <p class="purpose">Audit binder: pick a date range, get the full printable index of inspections, NCRs and CAPAs with closure status. 3 panic-days → 3 minutes.</p>
+        <div class="card">
+          <div style="display:flex;gap:12px;align-items:end;margin-bottom:12px">
+            <div style="max-width:180px"><label>From</label><input id="bFrom" type="date"></div>
+            <div style="max-width:180px"><label>To</label><input id="bTo" type="date"></div>
+            <button class="btn primary" onclick="loadBinder()">Generate binder</button>
+            <button class="btn" onclick="window.print()">Print binder</button>
+          </div>
+          <div id="binderOut"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-about">
+        <nav class="about-nav">
+          <a href="#ab1">1 · What this is</a><a href="#ab2">2 · Problem</a><a href="#ab3">3 · Data flow</a>
+          <a href="#ab4">4 · Business logic</a><a href="#ab5">5 · Automations</a><a href="#ab6">6 · Roles</a><a href="#ab7">7 · Limits</a>
+        </nav>
+        <div class="about-body">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h2 style="font-size:20px;font-weight:600">About this System</h2>
+            <button class="btn" onclick="window.print()">Print / Export as PDF</button>
+          </div>
+          <div class="card" id="ab1"><h2>1 · What This System Is</h2>
+            <p style="font-size:13px">A Quality Inspection, NCR &amp; CAPA Management System for in-plant quality: incoming, in-process, and final inspection with enforced non-conformance and corrective-action workflows. It replaces paper inspection registers, WhatsApp rejection photos, and verbal root-cause analysis. Its single most important outcome is that the same defect stops returning every quarter — because repeat defects mechanically force a verified CAPA.</p>
+            <p style="font-size:13px;margin-top:8px"><b>Built for:</b> Quality Head, Inspector, Section Head, Plant Head, Admin.</p>
+            <p class="mono" style="font-size:12px;color:var(--text-3);margin-top:8px" id="abVersion"></p>
+          </div>
+          <div class="card" id="ab2"><h2>2 · The Problem It Solves</h2>
+            <ul style="font-size:13px;padding-left:18px;color:var(--text-2)">
+              <li>Paper inspection registers — 3 panic-days of reconstruction per customer audit.</li>
+              <li>Rejection notes as WhatsApp photos — no disposition authority, no traceability.</li>
+              <li>Root cause never verified — the same defect returns quarterly, each recurrence costing rework + rejection value.</li>
+              <li>No answer to "which supplier / machine / defect costs us the most" — quality spend is blind.</li>
+              <li>"Use-as-is" decisions made informally — audit findings and customer escapes.</li>
+              <li>CAPA closure without effectiveness check — corrective actions that never corrected anything.</li>
+            </ul>
+          </div>
+          <div class="card" id="ab3"><h2>3 · How Data Flows</h2>
+            <div class="arch">
+              <div class="box">Inspector / QHead / Section Head</div><span class="arr">→</span>
+              <div class="box">Web App (HtmlService SPA)</div><span class="arr">→</span>
+              <div class="box">code.gs server functions</div><span class="arr">→</span>
+              <div class="box">Google Sheets (12 tabs)</div><span class="arr">→</span>
+              <div class="box">Triggers: repeat scan 02:00 · escalation 06:00 · digest 07:00</div><span class="arr">→</span>
+              <div class="box">Emails + audit binder</div>
+            </div>
+            <table><thead><tr><th>Sheet</th><th>Stores</th><th>Written by</th><th>Read by</th></tr></thead><tbody id="abSheets"></tbody></table>
+          </div>
+          <div class="card" id="ab4"><h2>4 · Exact Business Logic</h2><div id="abLogic"></div></div>
+          <div class="card" id="ab5"><h2>5 · Automations &amp; Triggers</h2>
+            <table><thead><tr><th>Trigger</th><th>Schedule</th><th>What it does</th><th>Notifies</th><th>Writes</th></tr></thead><tbody>
+              <tr><td>repeatDefectScan</td><td>Daily 02:00</td><td>Flags defect+item combos ≥ REPEAT_DEFECT_COUNT in REPEAT_DEFECT_DAYS; opens Repeat Defect Alert requiring mandatory CAPA</td><td>QUALITY_HEAD_EMAIL</td><td>RepeatAlerts, JobRuns</td></tr>
+              <tr><td>escalationScan</td><td>Daily 06:00</td><td>Dispositions pending &gt; DISPOSITION_ESCALATE_HOURS → plant head; CAPAs past target → flagged action-overdue</td><td>PLANT_HEAD / QUALITY_HEAD</td><td>CAPAs.status, JobRuns</td></tr>
+              <tr><td>sendDailyDigest</td><td>Daily 07:00</td><td>Open NCRs, pending dispositions, overdue CAPAs, open repeat alerts, COPQ this month</td><td>QUALITY_HEAD_EMAIL</td><td>JobRuns</td></tr>
+            </tbody></table>
+          </div>
+          <div class="card" id="ab6"><h2>6 · Roles &amp; Permissions</h2>
+            <table><thead><tr><th>Role</th><th>Inspect</th><th>Raise NCR</th><th>Approve disposition</th><th>CAPA</th><th>Binder/COPQ</th></tr></thead><tbody>
+              <tr><td>Admin</td><td>Full</td><td>Full</td><td>Full</td><td>Full</td><td>Full</td></tr>
+              <tr><td>Quality Head</td><td>Full</td><td>Full</td><td>Per matrix</td><td>Full</td><td>Full</td></tr>
+              <tr><td>Inspector</td><td>Full</td><td>Full</td><td>None</td><td>View</td><td>None</td></tr>
+              <tr><td>Section Head</td><td>None</td><td>None</td><td>rework only</td><td>Edit own</td><td>None</td></tr>
+              <tr><td>Plant Head</td><td>None</td><td>None</td><td>use-as-is co-sign</td><td>View</td><td>Full</td></tr>
+            </tbody></table>
+          </div>
+          <div class="card" id="ab7"><h2>7 · Assumptions &amp; Limits</h2>
+            <ul style="font-size:13px;padding-left:18px;color:var(--text-2)">
+              <li>Single plant; COPQ rates are flat per-unit (Config) — not item-specific costing.</li>
+              <li>Photos referenced by note text; Drive-file attachment is a phase-2 item.</li>
+              <li>~20k Inspections rows before register screens need archiving; practical ceiling ≈ 30 concurrent users.</li>
+              <li>MailApp daily quota applies to escalations; digests batch all items into one email.</li>
+              <li>Deliberately NOT: customer complaints (internal quality only), SPC control charts, gauge R&amp;R. Upgrade path: export to a stats package; this app remains the capture and workflow layer.</li>
+            </ul>
+            <p class="mono" style="font-size:12px;color:var(--text-3);margin-top:8px" id="abVerified"></p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+<div id="toasts"></div>
+
+<script>
+var BOOT=null,PLAN=[],LAST_INSP=null;
+var NAVS=[
+  {id:'dashboard',label:'Dashboard',roles:null},
+  {id:'inspect',label:'Run Inspection',roles:['Admin','Inspector','Quality Head']},
+  {id:'ncrs',label:'NCR Register',roles:null},
+  {id:'capa',label:'CAPA',roles:['Admin','Quality Head','Section Head','Plant Head']},
+  {id:'suppliers',label:'Supplier Scorecard',roles:['Admin','Quality Head','Plant Head']},
+  {id:'copq',label:'Cost of Poor Quality',roles:['Admin','Quality Head','Plant Head']},
+  {id:'binder',label:'Audit Binder',roles:['Admin','Quality Head','Plant Head']},
+  {id:'about',label:'About this System',roles:null}
+];
+function gs(fn){
+  var args=Array.prototype.slice.call(arguments,1);
+  document.getElementById('progress').classList.add('on');
+  return new Promise(function(res,rej){
+    google.script.run.withSuccessHandler(function(r){
+      document.getElementById('progress').classList.remove('on');
+      if(r&&r.ok===false){toast(r.error,true);rej(r.error);}else res(r?r.data:null);
+    }).withFailureHandler(function(e){
+      document.getElementById('progress').classList.remove('on');
+      toast(e.message||String(e),true);rej(e);
+    })[fn].apply(null,args);
+  });
+}
+function toast(m,err){var t=document.createElement('div');t.className='toast'+(err?' err':'');t.textContent=m;
+  document.getElementById('toasts').appendChild(t);setTimeout(function(){t.remove();},4000);}
+function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+function fd(d){return d?String(d).slice(0,10):'—';}
+function show(id){
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  document.getElementById('view-'+id).classList.add('active');
+  document.querySelectorAll('.nav a').forEach(function(a){a.classList.toggle('active',a.dataset.view===id);});
+  document.getElementById('pageTitle').textContent=NAVS.filter(function(n){return n.id===id;})[0].label;
+  if(id==='dashboard')loadDashboard();
+  if(id==='ncrs')loadNcrs();
+  if(id==='capa')loadCapas();
+  if(id==='suppliers')loadSuppliers();
+  if(id==='copq')loadCopq();
+  if(id==='about')loadAbout();
+}
+
+gs('bootstrap').then(function(b){
+  BOOT=b;
+  document.getElementById('uName').textContent=b.me.name;
+  document.getElementById('uRole').textContent='· '+b.me.role;
+  var nav=document.getElementById('nav');nav.innerHTML='<div class="grp">Quality</div>';
+  NAVS.forEach(function(n){
+    if(n.roles&&n.roles.indexOf(b.me.role)===-1&&b.me.role!=='Admin')return;
+    if(n.id==='about')nav.innerHTML+='<div class="grp">Reference</div>';
+    var a=document.createElement('a');a.href='javascript:void(0)';a.dataset.view=n.id;a.textContent=n.label;
+    a.onclick=function(){show(n.id);};nav.appendChild(a);
+  });
+  document.getElementById('iItem').innerHTML=b.items.map(function(i){return '<option>'+esc(i)+'</option>';}).join('');
+  document.getElementById('iSupplier').innerHTML='<option value="">—</option>'+b.suppliers.map(function(s){return '<option value="'+esc(s.supplierId)+'">'+esc(s.name)+'</option>';}).join('');
+  document.getElementById('nDefect').innerHTML=b.defectCodes.map(function(d){return '<option value="'+esc(d.code)+'">'+esc(d.code)+' — '+esc(d.description)+'</option>';}).join('');
+  var t=new Date();document.getElementById('bTo').value=t.toISOString().slice(0,10);
+  document.getElementById('bFrom').value=new Date(t.getTime()-90*86400000).toISOString().slice(0,10);
+  loadPlan();
+  show('dashboard');
+});
+
+function kpi(l,v,s){return '<div class="kpi"><div class="lbl">'+l+'</div><div class="val">'+v+'</div><div class="sub">'+s+'</div></div>';}
+
+function loadDashboard(){
+  gs('getDashboard').then(function(d){
+    document.getElementById('kpis').innerHTML=
+      kpi('Open NCRs',d.openNcrs,'lots on hold')+
+      kpi('Pending dispositions',d.pendingDispositions,'awaiting approval')+
+      kpi('Overdue CAPAs',d.overdueCapas,'past target date')+
+      kpi('Repeat alerts',d.openRepeatAlerts,'CAPA mandatory')+
+      kpi('COPQ this month','₹'+d.copqMonth.toLocaleString(),'reject + rework')+
+      kpi('Pass rate 30d',d.passRate30+'%','all stages');
+    document.getElementById('attnBody').innerHTML=d.attention.length?d.attention.map(function(n){
+      return '<tr><td class="id">'+esc(n.ncrId)+'</td><td>'+esc(n.item)+'</td><td>'+esc(n.defectCode)+'</td><td class="num">'+n.qtyAffected+
+        '</td><td>'+esc(n.disposition)+'</td><td><span class="pill '+(n.dispositionStatus==='pending'?'warn':'ok')+'">'+esc(n.dispositionStatus)+'</span></td>'+
+        '<td>'+(n.dispositionStatus==='pending'?'<button class="btn" onclick="approve(\''+esc(n.ncrId)+'\')">Approve disposition</button>':'')+'</td></tr>';
+    }).join(''):'<tr><td colspan="7" style="color:var(--text-3)">Nothing pending.</td></tr>';
+    document.getElementById('repeatBody').innerHTML=d.repeatAlerts.length?d.repeatAlerts.map(function(a){
+      return '<tr><td class="id">'+esc(a.alertId)+'</td><td>'+esc(a.defectCode)+'</td><td>'+esc(a.item)+'</td><td class="num">'+a.occurrences+
+        '</td><td class="num">'+a.windowDays+'d</td><td><span class="pill '+(a.status==='open-capa-required'?'danger':'info')+'">'+esc(a.status)+'</span></td></tr>';
+    }).join(''):'<tr><td colspan="6" style="color:var(--text-3)">No repeat-defect alerts.</td></tr>';
+  });
+}
+
+function loadPlan(){
+  var item=document.getElementById('iItem').value,stage=document.getElementById('iStage').value;
+  if(!item)return;
+  gs('getInspectionPlan',item,stage).then(function(plan){
+    PLAN=plan;
+    document.getElementById('planReadings').innerHTML=plan.length?plan.map(function(p,i){
+      return '<div class="reading" id="rd'+i+'"><div style="flex:1"><b style="font-size:13px">'+esc(p.characteristic)+'</b>'+(p.critical?' <span class="pill danger">critical</span>':'')+
+        '<div class="spec">spec '+p.specMin+' – '+p.specMax+' · target '+p.target+' · '+esc(p.method)+'</div></div>'+
+        '<input class="mono" type="number" step="0.01" placeholder="observed" oninput="checkSpec('+i+',this)"></div>';
+    }).join(''):'<p style="font-size:13px;color:var(--warn)">No inspection plan defined for this item + stage.</p>';
+  });
+}
+function checkSpec(i,el){
+  var p=PLAN[i];var v=Number(el.value);
+  document.getElementById('rd'+i).classList.toggle('oos',el.value!==''&&(v<Number(p.specMin)||v>Number(p.specMax)));
+}
+function submitInspection(){
+  var readings=PLAN.map(function(p,i){
+    var el=document.querySelector('#rd'+i+' input');
+    return {characteristic:p.characteristic,observed:el.value,specMin:p.specMin,specMax:p.specMax,critical:p.critical};
+  });
+  if(readings.some(function(r){return r.observed==='';})){toast('Enter all observed readings first.',true);return;}
+  var btn=document.getElementById('btnInspect');btn.disabled=true;
+  gs('submitInspection',{stage:document.getElementById('iStage').value,item:document.getElementById('iItem').value,
+    lotNo:document.getElementById('iLot').value,lotQty:document.getElementById('iLotQty').value,
+    supplier:document.getElementById('iSupplier').value,machine:document.getElementById('iMachine').value,readings:readings
+  }).then(function(r){
+    btn.disabled=false;LAST_INSP=r.inspId;
+    toast('Inspection '+r.inspId+' recorded — result: '+r.result.toUpperCase(),r.result==='fail');
+    document.getElementById('ncrPanel').style.display=r.requiresNcr?'block':'none';
+  }).catch(function(){btn.disabled=false;});
+}
+function createNcr(){
+  gs('createNcr',{sourceInspection:LAST_INSP,item:document.getElementById('iItem').value,
+    defectCode:document.getElementById('nDefect').value,qtyAffected:document.getElementById('nQty').value,
+    disposition:document.getElementById('nDisp').value,notes:document.getElementById('nNotes').value
+  }).then(function(r){toast('NCR '+r.ncrId+' raised — lot on Quality Hold');document.getElementById('ncrPanel').style.display='none';});
+}
+
+function loadNcrs(){
+  gs('getRegister','NCRs',{q:document.getElementById('ncrSearch').value,status:document.getElementById('ncrStatus').value}).then(function(data){
+    document.getElementById('ncrBody').innerHTML=data.map(function(n){
+      return '<tr><td class="id">'+esc(n.ncrId)+'</td><td class="mono">'+fd(n.date)+'</td><td>'+esc(n.item)+'</td><td>'+esc(n.defectCode)+
+        '</td><td class="num">'+n.qtyAffected+'</td><td>'+esc(n.disposition)+' <span class="pill '+(n.dispositionStatus==='approved'?'ok':'warn')+'">'+esc(n.dispositionStatus)+'</span></td>'+
+        '<td class="num">'+Number(n.costImpact||0).toLocaleString()+'</td><td><span class="pill '+(n.status==='open'?'danger':'grey')+'">'+esc(n.status)+'</span></td>'+
+        '<td>'+(n.dispositionStatus==='pending'?'<button class="btn" onclick="approve(\''+esc(n.ncrId)+'\')">Approve</button>':(n.status==='open'?'<button class="btn" onclick="closeNcr(\''+esc(n.ncrId)+'\')">Close NCR</button>':''))+'</td></tr>';
+    }).join('')||'<tr><td colspan="9" style="color:var(--text-3)">No NCRs match.</td></tr>';
+  });
+}
+function approve(id){gs('approveDisposition',id).then(function(r){
+  toast(r.fullyApproved?'Disposition fully approved':'Approval recorded — '+r.pendingApprovals+' more needed');loadNcrs();loadDashboard();});}
+function closeNcr(id){gs('closeNcr',id).then(function(){toast('NCR '+id+' closed');loadNcrs();});}
+
+function loadCapas(){
+  gs('getRegister','CAPAs',null).then(function(data){
+    document.getElementById('capaBody').innerHTML=data.map(function(c){
+      var cls=c.status==='action-overdue'?'danger':c.status==='closed-effective'?'ok':c.status==='closed-pending-verification'?'info':'grey';
+      var act='';
+      if(c.status==='action-defined')act='<button class="btn" onclick="closeCapaUi(\''+esc(c.capaId)+'\')">Close (starts verification)</button>';
+      if(c.status==='closed-pending-verification')act='<button class="btn" onclick="verifyUi(\''+esc(c.capaId)+'\',true)">Verified effective</button> <button class="btn" onclick="verifyUi(\''+esc(c.capaId)+'\',false)">Not effective</button>';
+      return '<tr><td class="id">'+esc(c.capaId)+'</td><td>'+esc(c.ncrRef)+'</td><td style="max-width:280px">'+esc(c.problemStatement)+'</td><td>'+esc(c.responsible)+
+        '</td><td class="mono">'+fd(c.targetDate)+'</td><td><span class="pill '+cls+'">'+esc(c.status)+'</span></td><td>'+act+'</td></tr>';
+    }).join('')||'<tr><td colspan="7" style="color:var(--text-3)">No CAPAs yet.</td></tr>';
+  });
+}
+function saveCapa(){
+  gs('saveCapa',{capaId:document.getElementById('cId').value||null,ncrRef:document.getElementById('cNcr').value,
+    problemStatement:document.getElementById('cProblem').value,
+    why1:document.getElementById('cW1').value,why2:document.getElementById('cW2').value,why3:document.getElementById('cW3').value,
+    why4:document.getElementById('cW4').value,why5:document.getElementById('cW5').value,
+    correctiveAction:document.getElementById('cAction').value,responsible:document.getElementById('cResp').value,
+    targetDate:document.getElementById('cTarget').value,status:document.getElementById('cStatus').value
+  }).then(function(r){toast('CAPA '+r.capaId+' saved');loadCapas();});
+}
+function closeCapaUi(id){gs('closeCapa',id).then(function(r){toast('CAPA closed — effectiveness verification due '+r.verificationDate);loadCapas();});}
+function verifyUi(id,eff){gs('verifyCapa',id,eff).then(function(){toast(eff?'CAPA verified effective':'CAPA reopened — action was not effective',!eff);loadCapas();});}
+
+function loadSuppliers(){
+  gs('getSupplierScorecard').then(function(data){
+    document.getElementById('supBody').innerHTML=data.map(function(s){
+      var band=s.acceptanceRate>=90?'ok':s.acceptanceRate>=75?'warn':'danger';
+      return '<tr><td class="id">'+esc(s.name)+'</td><td class="num">'+s.lots+'</td><td class="num"><span class="pill '+band+'">'+s.acceptanceRate+'%</span></td>'+
+        '<td class="num">'+s.ppm.toLocaleString()+'</td><td>'+esc(s.topDefects.join(', ')||'—')+'</td></tr>';
+    }).join('')||'<tr><td colspan="5" style="color:var(--text-3)">No incoming inspections yet.</td></tr>';
+  });
+}
+
+function loadCopq(){
+  gs('getCopq').then(function(d){
+    document.getElementById('copqKpis').innerHTML=kpi('Total COPQ','₹'+d.total.toLocaleString(),'all recorded NCRs');
+    var max1=Math.max.apply(null,d.byDefect.map(function(x){return x.cost;}).concat([1]));
+    document.getElementById('copqDefects').innerHTML=d.byDefect.map(function(x){
+      return '<div class="hbar"><span class="k">'+esc(x.key)+'</span><div class="track"><i style="width:'+(x.cost/max1*100)+'%"></i></div><span class="v">₹'+x.cost.toLocaleString()+'</span></div>';
+    }).join('');
+    var max2=Math.max.apply(null,d.byMonth.map(function(x){return x.cost;}).concat([1]));
+    document.getElementById('copqMonths').innerHTML=d.byMonth.map(function(x){
+      return '<div class="hbar"><span class="k">'+esc(x.key)+'</span><div class="track"><i style="width:'+(x.cost/max2*100)+'%"></i></div><span class="v">₹'+x.cost.toLocaleString()+'</span></div>';
+    }).join('');
+  });
+}
+
+function loadBinder(){
+  gs('getAuditBinder',document.getElementById('bFrom').value,document.getElementById('bTo').value).then(function(b){
+    var h='<h2 style="font-size:16px;margin-bottom:8px">Audit binder · '+esc(b.range.from)+' → '+esc(b.range.to)+'</h2>';
+    h+='<h3 style="font-size:14px;margin:12px 0 6px">Inspections ('+b.inspections.length+')</h3><table><thead><tr><th>ID</th><th>Date</th><th>Stage</th><th>Item</th><th>Lot</th><th>Result</th><th>NCR</th></tr></thead><tbody>'+
+      b.inspections.map(function(i){return '<tr><td class="id">'+esc(i.inspId)+'</td><td class="mono">'+fd(i.date)+'</td><td>'+esc(i.stage)+'</td><td>'+esc(i.item)+'</td><td>'+esc(i.lotNo)+'</td><td><span class="pill '+(i.result==='pass'?'ok':i.result==='fail'?'danger':'warn')+'">'+esc(i.result)+'</span></td><td>'+esc(i.linkedNcr||'—')+'</td></tr>';}).join('')+'</tbody></table>';
+    h+='<h3 style="font-size:14px;margin:12px 0 6px">NCRs ('+b.ncrs.length+')</h3><table><thead><tr><th>ID</th><th>Item</th><th>Defect</th><th>Disposition</th><th>Status</th></tr></thead><tbody>'+
+      b.ncrs.map(function(n){return '<tr><td class="id">'+esc(n.ncrId)+'</td><td>'+esc(n.item)+'</td><td>'+esc(n.defectCode)+'</td><td>'+esc(n.disposition)+' ('+esc(n.dispositionStatus)+')</td><td>'+esc(n.status)+'</td></tr>';}).join('')+'</tbody></table>';
+    h+='<h3 style="font-size:14px;margin:12px 0 6px">CAPAs ('+b.capas.length+')</h3><table><thead><tr><th>ID</th><th>Problem</th><th>Status</th><th>Effectiveness</th></tr></thead><tbody>'+
+      b.capas.map(function(c){return '<tr><td class="id">'+esc(c.capaId)+'</td><td>'+esc(c.problemStatement)+'</td><td>'+esc(c.status)+'</td><td>'+esc(c.effectivenessResult||'pending')+'</td></tr>';}).join('')+'</tbody></table>';
+    document.getElementById('binderOut').innerHTML=h;
+  });
+}
+
+function exportCsv(entity){
+  gs('getRegister',entity,null).then(function(data){
+    if(!data.length){toast('Nothing to export',true);return;}
+    var cols=Object.keys(data[0]).filter(function(k){return k!=='_row';});
+    var csv=cols.join(',')+'\n'+data.map(function(r){return cols.map(function(c){return '"'+String(r[c]==null?'':r[c]).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+    var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=entity+'.csv';a.click();
+    toast(entity+'.csv exported');
+  });
+}
+
+function loadAbout(){
+  gs('getAboutData').then(function(a){
+    document.getElementById('abVersion').textContent=a.version+' · built '+a.buildDate+' · Google Apps Script + Sheets';
+    document.getElementById('abVerified').textContent='Last verified against build: '+new Date(a.lastVerified).toLocaleString();
+    var writers={InspectionPlans:'Admin/setup',Inspections:'Inspector (submitInspection)',InspectionReadings:'submitInspection',NCRs:'createNcr / approveDisposition',CAPAs:'saveCapa / closeCapa / verifyCapa',DefectCodes:'Admin',Suppliers:'Admin',RepeatAlerts:'repeatDefectScan trigger',Users:'Admin',Config:'Admin/setup',AuditLog:'every write',JobRuns:'every trigger'};
+    var readers={InspectionPlans:'inspection screen',Inspections:'registers, scorecard, binder',InspectionReadings:'binder detail',NCRs:'register, COPQ, dashboard',CAPAs:'register, dashboard',DefectCodes:'NCR form',Suppliers:'scorecard',RepeatAlerts:'dashboard',Users:'auth',Config:'all logic',AuditLog:'Admin',JobRuns:'Admin'};
+    document.getElementById('abSheets').innerHTML=a.sheets.map(function(s){
+      return '<tr><td class="id">'+esc(s.name)+'</td><td style="font-size:12px">'+esc(s.columns.join(', '))+'</td><td>'+esc(writers[s.name]||'—')+'</td><td>'+esc(readers[s.name]||'—')+'</td></tr>';}).join('');
+    var c=a.config;
+    var cards=[
+      ['Inspection result','result = fail if ANY critical characteristic out of spec · conditional if only non-critical fails · pass otherwise','Inputs: InspectionReadings.observed vs InspectionPlans.specMin/specMax; critical flag per characteristic.','Computed on submit (submitInspection). Fail forces the NCR panel in the same flow — the lot goes on Quality Hold.','Blank readings are rejected before compute; equal-to-limit values count as within spec.'],
+      ['Disposition authority','approvals required = DISPOSITION_MATRIX[disposition]','Matrix (Config!DISPOSITION_MATRIX): rework→Section Head · reject→Quality Head · use-as-is→Quality Head + Plant Head · return-to-supplier→Quality Head.','Enforced on every approveDisposition call server-side; UI hides the button for other roles.','Same person cannot approve twice; Admin can approve anything (audited).'],
+      ['Disposition escalation','pending hours > DISPOSITION_ESCALATE_HOURS → plant head email','Threshold = '+c.DISPOSITION_ESCALATE_HOURS+'h (Config). Checked daily 06:00 by escalationScan.','Time-driven trigger.','Repeats daily while pending — intentional; approved dispositions never escalate.'],
+      ['5-Why enforcement','status may become "action-defined" ONLY if why1…why5 all non-empty','Server-side validation in saveCapa; "N/A — reason" is an accepted fill.','On every CAPA save.','Whitespace-only entries rejected as empty.'],
+      ['Effectiveness verification','verificationDate = closure date + EFFECTIVENESS_CHECK_DAYS','Days = '+c.EFFECTIVENESS_CHECK_DAYS+' (Config). Failed verification reopens the CAPA as "reopened-ineffective".','Set at closeCapa; verification recorded via verifyCapa.','Verification before the due date is allowed; the date is a floor for the reviewer, not a lock.'],
+      ['Repeat-defect alert','fire when count(defectCode+item NCRs in last REPEAT_DEFECT_DAYS) ≥ REPEAT_DEFECT_COUNT','Currently ≥ '+c.REPEAT_DEFECT_COUNT+' in '+c.REPEAT_DEFECT_DAYS+' days (Config). One alert per combo (dedup on existing alerts).','Nightly 02:00 (repeatDefectScan); mandatory CAPA follows.','Combos already alerted never re-fire; closing the linked CAPA does not auto-close the alert.'],
+      ['Cost of poor quality','costImpact = qtyAffected × (REJECT_RATE_PER_UNIT if reject else REWORK_RATE_PER_UNIT)','Rates: ₹'+c.REJECT_RATE_PER_UNIT+' reject · ₹'+c.REWORK_RATE_PER_UNIT+' rework (Config). Aggregated by defect code and month.','Computed at NCR creation; frozen thereafter.','Rate changes affect only future NCRs — historical COPQ is immutable.'],
+      ['Supplier scorecard','acceptance% = passed incoming lots / total incoming lots · PPM = defect units / inspected units × 1,000,000','Inputs: Inspections(stage=incoming).result + linked NCRs.qtyAffected.','Computed on scorecard screen load.','Suppliers with zero incoming lots do not appear; PPM uses lot qty as the unit base.']
+    ];
+    document.getElementById('abLogic').innerHTML=cards.map(function(x){
+      return '<div class="logic-card"><h4>'+x[0]+'</h4><div class="formula">'+esc(x[1])+'</div>'+
+        '<p><b>Inputs &amp; thresholds:</b> '+esc(x[2])+'</p><p><b>Timing:</b> '+esc(x[3])+'</p><p><b>Edge cases:</b> '+esc(x[4])+'</p></div>';}).join('');
+  });
+}
+</script>
+</body>
+</html>

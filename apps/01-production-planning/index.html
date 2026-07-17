@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Production System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#ffffff;--surface-2:#f1f1ef;--border:#e4e4e0;
+  --text:#1a1a18;--text-2:#6b6b66;--text-3:#9c9c96;
+  --brand:#0f5132;--brand-soft:#e7f0eb;
+  --ok:#15803d;--ok-soft:#dcf2e3;--warn:#b45309;--warn-soft:#fdf0dc;
+  --danger:#b91c1c;--danger-soft:#fde8e8;--info:#1d4ed8;--info-soft:#e3ebfd;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;font-size:14px;color:var(--text);background:var(--bg);line-height:1.5}
+.mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:220px;background:#191918;flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;bottom:0}
+.side-logo{padding:16px;color:#fff;font-weight:600;font-size:14px;border-bottom:1px solid #2a2a28}
+.side-logo span{display:block;color:#a3a39e;font-size:11px;font-weight:400;margin-top:2px}
+.nav{padding:8px 0;flex:1}
+.nav a{display:flex;align-items:center;gap:10px;height:32px;padding:0 16px;color:#a3a39e;text-decoration:none;font-size:13px;border-left:2px solid transparent}
+.nav a:hover{color:#fff;transition:color 120ms ease-out}
+.nav a.active{color:#fff;background:rgba(255,255,255,0.06);border-left-color:var(--brand-soft)}
+.nav a svg{width:18px;height:18px;stroke-width:1.75}
+.nav .grp{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6b6b66;padding:14px 16px 4px}
+.main{flex:1;margin-left:220px;display:flex;flex-direction:column;min-width:0}
+.topbar{height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:20}
+.topbar h1{font-size:20px;font-weight:600;flex:1}
+.userchip{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2)}
+.userchip b{color:var(--text);font-weight:500}
+#progress{height:2px;background:transparent;position:sticky;top:48px;z-index:20}
+#progress.on{background:linear-gradient(90deg,var(--brand) 30%,var(--brand-soft) 60%,var(--brand) 90%);background-size:200% 100%;animation:prog 1s linear infinite}
+@keyframes prog{from{background-position:200% 0}to{background-position:-200% 0}}
+.content{padding:24px;max-width:1400px;width:100%;margin:0 auto}
+.purpose{font-size:13px;color:var(--text-2);margin-bottom:16px}
+.kpis{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;flex:1;min-width:160px}
+.kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2)}
+.kpi .val{font-size:28px;font-weight:600;font-family:'JetBrains Mono',monospace;line-height:1.2;margin-top:4px}
+.kpi .sub{font-size:12px;color:var(--text-3);margin-top:2px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px}
+.card h2{font-size:16px;font-weight:600;margin-bottom:12px}
+.card h2 .ctx{font-size:12px;font-weight:400;color:var(--text-3);margin-left:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);background:var(--surface-2);text-align:left;padding:8px 10px;position:sticky;top:0}
+td{padding:0 10px;height:38px;border-bottom:1px solid var(--border)}
+tr:hover td{background:var(--surface-2);transition:background 120ms ease-out}
+td.num,th.num{text-align:right;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+td.id{color:var(--brand);font-weight:500}
+.pill{display:inline-flex;align-items:center;gap:6px;height:20px;padding:0 8px;border-radius:10px;font-size:11px;font-weight:600}
+.pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.danger{background:var(--danger-soft);color:var(--danger)}
+.pill.info{background:var(--info-soft);color:var(--info)}
+.pill.grey{background:var(--surface-2);color:var(--text-2)}
+.btn{height:32px;padding:0 14px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit}
+.btn:hover{background:var(--surface-2);transition:background 120ms ease-out}
+.btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn.primary:hover{opacity:.92}
+.btn:disabled{opacity:.5;cursor:default}
+label{display:block;font-size:13px;font-weight:500;margin-bottom:4px}
+input,select,textarea{width:100%;height:36px;padding:0 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;background:var(--surface)}
+textarea{height:auto;padding:8px 10px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px}
+.form{max-width:560px;display:flex;flex-direction:column;gap:12px}
+.frow{display:flex;gap:12px}.frow>div{flex:1}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.tile{border:1px solid var(--border);border-radius:8px;padding:16px;background:var(--surface)}
+.tile.green{border-left:4px solid var(--ok)}
+.tile.amber{border-left:4px solid var(--warn)}
+.tile.red{border-left:4px solid var(--danger)}
+.tile.grey{border-left:4px solid var(--text-3)}
+.tile .mc{font-weight:600;font-size:14px}
+.tile .sec{font-size:12px;color:var(--text-3)}
+.tile .nums{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:13px}
+.bar{height:6px;background:var(--surface-2);border-radius:3px;margin-top:8px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--brand)}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper button{width:44px;height:44px;font-size:20px;border-radius:6px;border:1px solid var(--border);background:var(--surface);cursor:pointer}
+.stepper input{width:80px;text-align:center;font-family:'JetBrains Mono',monospace}
+#toasts{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:100}
+.toast{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--ok);border-radius:6px;padding:10px 14px;font-size:13px;min-width:260px;box-shadow:0 1px 2px rgb(0 0 0/0.04)}
+.toast.err{border-left-color:var(--danger)}
+.view{display:none}.view.active{display:block}
+.about-nav{position:sticky;top:64px;float:left;width:180px;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.about-nav a{display:block;padding:6px 0;color:var(--text-2);text-decoration:none}
+.about-nav a:hover{color:var(--brand)}
+.about-body{margin-left:200px}
+.formula{font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin:8px 0}
+.logic-card{border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;background:var(--surface)}
+.logic-card h4{font-size:14px;font-weight:600;margin-bottom:6px}
+.logic-card p{font-size:13px;color:var(--text-2);margin:4px 0}
+.arch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+.arch .box{border:1px solid var(--border);background:var(--surface-2);border-radius:6px;padding:8px 12px;font-size:12px;font-weight:500}
+.arch .arr{color:var(--text-3)}
+@media print{.sidebar,.topbar,#progress,.about-nav,.btn{display:none!important}.main{margin:0}.about-body{margin:0}.logic-card{break-inside:avoid}}
+@media (max-width:768px){.sidebar{display:none}.main{margin-left:0}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="side-logo">Production System<span>Plan · Execute · Measure</span></div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+  <div class="main">
+    <div class="topbar"><h1 id="pageTitle">Dashboard</h1><div class="userchip"><b id="uName">—</b><span id="uRole"></span></div></div>
+    <div id="progress"></div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view active" id="view-dashboard">
+        <p class="purpose">One screen of plant truth: plan vs actual today, machines down, OEE laggards, and dispatch commitments at risk.</p>
+        <div class="kpis" id="kpis"></div>
+        <div class="card"><h2>Commitment at Risk <span class="ctx">SKUs behind cumulative plan beyond tolerance</span></h2>
+          <table><thead><tr><th>SKU</th><th class="num">Planned</th><th class="num">Actual</th><th class="num">Gap %</th><th>Dispatch</th><th>Priority</th></tr></thead><tbody id="riskBody"></tbody></table>
+        </div>
+        <div class="card"><h2>Worst 5 machines by OEE <span class="ctx">30-day average, nightly engine</span></h2>
+          <table><thead><tr><th>Machine</th><th class="num">Avg OEE</th><th>Band</th></tr></thead><tbody id="oeeWorstBody"></tbody></table>
+        </div>
+      </section>
+
+      <!-- PLANT BOARD -->
+      <section class="view" id="view-board">
+        <p class="purpose">Live plant board — auto-refreshes every 60 seconds. Green: on plan · Amber: behind &gt;10% · Red: down · Grey: no plan.</p>
+        <div class="board" id="boardTiles"></div>
+      </section>
+
+      <!-- PLAN BUILDER -->
+      <section class="view" id="view-plans">
+        <p class="purpose">Planner: create shift plans. Slots exceeding rated capacity are flagged red before save.</p>
+        <div class="card"><h2>New plan</h2>
+          <div class="form">
+            <div class="frow">
+              <div><label>Date</label><input type="date" id="pDate"></div>
+              <div><label>Shift</label><select id="pShift"></select></div>
+            </div>
+            <div class="frow">
+              <div><label>Machine</label><select id="pMachine"></select></div>
+              <div><label>SKU</label><select id="pSku"></select></div>
+            </div>
+            <div class="frow">
+              <div><label>Planned qty <span style="color:var(--text-3);font-weight:400">validated vs rated capacity × 8h</span></label><input type="number" id="pQty" min="1"></div>
+              <div><label>Priority</label><select id="pPriority"><option>NORMAL</option><option>HIGH</option></select></div>
+            </div>
+            <div><label>Dispatch date</label><input type="date" id="pDispatch"></div>
+            <button class="btn primary" id="btnSavePlan" onclick="savePlan()">Create plan</button>
+          </div>
+        </div>
+        <div class="card"><h2>Plans for <span id="planDateLbl"></span></h2>
+          <table><thead><tr><th>Plan</th><th>Machine</th><th>SKU</th><th class="num">Qty</th><th class="num">Load %</th><th>Status</th></tr></thead><tbody id="plansBody"></tbody></table>
+        </div>
+      </section>
+
+      <!-- HOURLY LOGGING -->
+      <section class="view" id="view-logging">
+        <p class="purpose">Operator: pick your machine, log OK / rejected / rework per hour. Entries &gt;2h late are accepted but flagged.</p>
+        <div class="card"><h2>Log production</h2>
+          <div class="form">
+            <div class="frow">
+              <div><label>Machine</label><select id="lMachine" onchange="loadActivePlan()"></select></div>
+              <div><label>Hour slot</label><select id="lSlot"></select></div>
+            </div>
+            <div id="activePlanInfo" class="purpose"></div>
+            <div class="frow">
+              <div><label>OK qty</label><div class="stepper"><button onclick="step('lOk',-10)">−</button><input class="mono" id="lOk" type="number" value="0" min="0"><button onclick="step('lOk',10)">+</button></div></div>
+              <div><label>Rejected</label><div class="stepper"><button onclick="step('lRej',-1)">−</button><input class="mono" id="lRej" type="number" value="0" min="0"><button onclick="step('lRej',1)">+</button></div></div>
+              <div><label>Rework</label><div class="stepper"><button onclick="step('lRw',-1)">−</button><input class="mono" id="lRw" type="number" value="0" min="0"><button onclick="step('lRw',1)">+</button></div></div>
+            </div>
+            <div><label>Remarks</label><input id="lRemarks" placeholder="Optional"></div>
+            <button class="btn primary" id="btnLog" onclick="logProd()">Log hour production</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- DOWNTIME -->
+      <section class="view" id="view-downtime">
+        <p class="purpose">Stopping a machine requires category + sub-reason. Production logging is blocked while downtime is open.</p>
+        <div class="card"><h2>Start downtime</h2>
+          <div class="form">
+            <div class="frow">
+              <div><label>Machine</label><select id="dMachine"></select></div>
+              <div><label>Category</label><select id="dCat" onchange="fillSubReasons()"></select></div>
+              <div><label>Sub-reason</label><select id="dSub"></select></div>
+            </div>
+            <button class="btn primary" id="btnDt" onclick="startDt()">Start downtime event</button>
+          </div>
+        </div>
+        <div class="card"><h2>Open downtime</h2><div id="openDtList"></div></div>
+      </section>
+
+      <!-- VARIANCE -->
+      <section class="view" id="view-variance">
+        <p class="purpose">Plan vs actual, downtime by category, rejection % — the printable morning meeting pack.</p>
+        <div class="card">
+          <div style="display:flex;gap:12px;align-items:end;margin-bottom:12px">
+            <div style="max-width:200px"><label>Date</label><input type="date" id="vDate"></div>
+            <button class="btn" onclick="loadVariance()">Load report</button>
+            <button class="btn" onclick="window.print()">Print meeting pack</button>
+          </div>
+          <table><thead><tr><th>Machine</th><th>SKU</th><th class="num">Planned</th><th class="num">Produced</th><th class="num">Shortfall</th><th class="num">Rej %</th><th>Downtime</th></tr></thead><tbody id="varBody"></tbody></table>
+        </div>
+        <div class="card"><h2>Changeover analysis <span class="ctx">average changeover minutes per machine</span></h2>
+          <table><thead><tr><th>Machine</th><th class="num">Events</th><th class="num">Avg min</th><th class="num">Total min</th></tr></thead><tbody id="coBody"></tbody></table>
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section class="view" id="view-about">
+        <nav class="about-nav">
+          <a href="#ab1">1 · What this is</a><a href="#ab2">2 · Problem</a><a href="#ab3">3 · Data flow</a>
+          <a href="#ab4">4 · Business logic</a><a href="#ab5">5 · Automations</a><a href="#ab6">6 · Roles</a><a href="#ab7">7 · Limits</a>
+        </nav>
+        <div class="about-body">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h2 style="font-size:20px;font-weight:600">About this System</h2>
+            <button class="btn" onclick="window.print()">Print / Export as PDF</button>
+          </div>
+          <div class="card" id="ab1"><h2>1 · What This System Is</h2>
+            <p style="font-size:13px">This is a Production Planning &amp; Shop-Floor Execution System. It replaces the planner's personal Excel, the whiteboard, and the 45-minute "as per my data" morning argument with a single source of truth: what was planned per machine per shift, what was actually produced hour by hour, which machine is down and why, and whether today's dispatch commitment is safe. Its single most important outcome is a morning meeting that starts from agreed numbers.</p>
+            <p style="font-size:13px;margin-top:8px"><b>Built for:</b> Planner, Section Head, Operator, Plant Head, Admin.</p>
+            <p class="mono" style="font-size:12px;color:var(--text-3);margin-top:8px" id="abVersion"></p>
+          </div>
+          <div class="card" id="ab2"><h2>2 · The Problem It Solves</h2>
+            <ul style="font-size:13px;padding-left:18px;color:var(--text-2)">
+              <li>Three versions of the truth (planning Excel, whiteboard, verbal) — 45 min/day of meeting argument ≈ 190 hours/year of senior time.</li>
+              <li>Downtime unrecorded — a 90-minute breakdown that nobody times costs the shift's plan silently.</li>
+              <li>Dispatch risk discovered by the customer — penalty clauses and expedited freight.</li>
+              <li>No OEE — capacity investment decisions made on gut feel.</li>
+              <li>Changeover waste invisible — poor sequencing burns 30+ min per SKU switch.</li>
+              <li>Late/backfilled entries indistinguishable from live data — accountability impossible.</li>
+            </ul>
+          </div>
+          <div class="card" id="ab3"><h2>3 · How Data Flows</h2>
+            <div class="arch">
+              <div class="box">Planner / Operator / Section Head</div><span class="arr">→</span>
+              <div class="box">Web App (HtmlService SPA)</div><span class="arr">→</span>
+              <div class="box">code.gs server functions</div><span class="arr">→</span>
+              <div class="box">Google Sheets (11 tabs)</div><span class="arr">→</span>
+              <div class="box">Triggers: OEE 01:00 · Digest 07:00 · Downtime check /30min</div><span class="arr">→</span>
+              <div class="box">Emails + Plant board</div>
+            </div>
+            <table><thead><tr><th>Sheet</th><th>Stores</th><th>Written by</th><th>Read by</th></tr></thead><tbody id="abSheets"></tbody></table>
+          </div>
+          <div class="card" id="ab4"><h2>4 · Exact Business Logic</h2><div id="abLogic"></div></div>
+          <div class="card" id="ab5"><h2>5 · Automations &amp; Triggers</h2>
+            <table><thead><tr><th>Trigger</th><th>Schedule</th><th>What it does</th><th>Notifies</th><th>Writes</th></tr></thead><tbody>
+              <tr><td>runOeeEngine</td><td>Daily 01:00</td><td>Recomputes A×P×Q per machine/shift from ProductionEntries + DowntimeEvents</td><td>—</td><td>OEEResults, JobRuns</td></tr>
+              <tr><td>sendMorningDigest</td><td>Daily 07:00</td><td>Yesterday's variance table + commitment-at-risk list</td><td>PLANT_HEAD_EMAIL</td><td>JobRuns</td></tr>
+              <tr><td>checkOpenDowntime</td><td>Every 30 min</td><td>Open events past DOWNTIME_EMAIL_MIN → section head; past DOWNTIME_ESCALATE_MIN → plant head</td><td>Config emails</td><td>JobRuns</td></tr>
+            </tbody></table>
+          </div>
+          <div class="card" id="ab6"><h2>6 · Roles &amp; Permissions</h2>
+            <table><thead><tr><th>Role</th><th>Plans</th><th>Log production</th><th>Downtime</th><th>Board</th><th>Variance/OEE</th></tr></thead><tbody>
+              <tr><td>Admin</td><td>Full</td><td>Full</td><td>Full</td><td>View</td><td>View</td></tr>
+              <tr><td>Planner</td><td>Full</td><td>None</td><td>None</td><td>View</td><td>View</td></tr>
+              <tr><td>Section Head</td><td>View</td><td>Full</td><td>Full</td><td>View</td><td>View</td></tr>
+              <tr><td>Operator</td><td>None</td><td>Full (own machine)</td><td>Full</td><td>View</td><td>None</td></tr>
+              <tr><td>Plant Head</td><td>View</td><td>None</td><td>None</td><td>View</td><td>View</td></tr>
+            </tbody></table>
+          </div>
+          <div class="card" id="ab7"><h2>7 · Assumptions &amp; Limits</h2>
+            <ul style="font-size:13px;padding-left:18px;color:var(--text-2)">
+              <li>Single plant, single currency; shift A assumed 06:00–14:00 for plan math (Shifts sheet drives display).</li>
+              <li>Practical ceiling ≈ 30 concurrent users; ~50k ProductionEntries rows before dashboard slows — archive quarterly.</li>
+              <li>Apps Script quotas: 6-min execution cap per run, ~100 MailApp recipients/day (consumer) — digests are batched.</li>
+              <li>No true real-time push — plant board polls every 60 seconds.</li>
+              <li>Deliberately does NOT do: finite-capacity scheduling optimization, machine-PLC integration, multi-plant rollup. Upgrade path: export sheets to BigQuery + keep this app as the capture layer.</li>
+            </ul>
+            <p class="mono" style="font-size:12px;color:var(--text-3);margin-top:8px" id="abVerified"></p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+<div id="toasts"></div>
+
+<script>
+var BOOT = null;
+var NAVS = [
+  {id:'dashboard', label:'Dashboard', roles:null},
+  {id:'board', label:'Plant Board', roles:null},
+  {id:'plans', label:'Plan Builder', roles:['Admin','Planner']},
+  {id:'logging', label:'Hourly Logging', roles:['Admin','Operator','Section Head']},
+  {id:'downtime', label:'Downtime', roles:['Admin','Operator','Section Head']},
+  {id:'variance', label:'Variance Report', roles:['Admin','Planner','Section Head','Plant Head']},
+  {id:'about', label:'About this System', roles:null}
+];
+
+function gs(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  document.getElementById('progress').classList.add('on');
+  return new Promise(function (res, rej) {
+    google.script.run
+      .withSuccessHandler(function (r) {
+        document.getElementById('progress').classList.remove('on');
+        if (r && r.ok === false) { toast(r.error, true); rej(r.error); } else res(r ? r.data : null);
+      })
+      .withFailureHandler(function (e) {
+        document.getElementById('progress').classList.remove('on');
+        toast(e.message || String(e), true); rej(e);
+      })[fn].apply(null, args);
+  });
+}
+
+function toast(msg, err) {
+  var t = document.createElement('div');
+  t.className = 'toast' + (err ? ' err' : '');
+  t.textContent = msg;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(function () { t.remove(); }, 4000);
+}
+
+function show(id) {
+  document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('active'); });
+  document.getElementById('view-' + id).classList.add('active');
+  document.querySelectorAll('.nav a').forEach(function (a) { a.classList.toggle('active', a.dataset.view === id); });
+  document.getElementById('pageTitle').textContent = NAVS.filter(function (n) { return n.id === id; })[0].label;
+  if (id === 'dashboard') loadDashboard();
+  if (id === 'board') loadBoard();
+  if (id === 'plans') loadPlans();
+  if (id === 'downtime') loadOpenDt();
+  if (id === 'variance') { loadVariance(); loadChangeover(); }
+  if (id === 'about') loadAbout();
+}
+
+function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML}
+function step(id, n){var el=document.getElementById(id);el.value=Math.max(0,Number(el.value||0)+n)}
+function todayStr(){return new Date().toISOString().slice(0,10)}
+
+/* init */
+gs('bootstrap').then(function (b) {
+  BOOT = b;
+  document.getElementById('uName').textContent = b.me.name;
+  document.getElementById('uRole').textContent = '· ' + b.me.role;
+  var nav = document.getElementById('nav');
+  nav.innerHTML = '<div class="grp">Operations</div>';
+  NAVS.forEach(function (n) {
+    if (n.roles && n.roles.indexOf(b.me.role) === -1 && b.me.role !== 'Admin') return;
+    if (n.id === 'about') nav.innerHTML += '<div class="grp">Reference</div>';
+    var a = document.createElement('a');
+    a.href = 'javascript:void(0)'; a.dataset.view = n.id; a.textContent = n.label;
+    a.onclick = function () { show(n.id); };
+    nav.appendChild(a);
+  });
+  // fill selects
+  ['pMachine','lMachine','dMachine'].forEach(function (id) {
+    document.getElementById(id).innerHTML = b.machines.map(function (m) { return '<option value="' + esc(m.code) + '">' + esc(m.code) + ' — ' + esc(m.name) + '</option>'; }).join('');
+  });
+  document.getElementById('pSku').innerHTML = b.products.map(function (p) { return '<option value="' + esc(p.sku) + '">' + esc(p.sku) + ' — ' + esc(p.name) + '</option>'; }).join('');
+  document.getElementById('pShift').innerHTML = b.shifts.map(function (s) { return '<option>' + esc(s.name) + '</option>'; }).join('');
+  document.getElementById('dCat').innerHTML = Object.keys(b.dtReasons).map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('');
+  fillSubReasons();
+  var slots = []; for (var h = 6; h < 22; h++) slots.push(h + ':00');
+  document.getElementById('lSlot').innerHTML = slots.map(function (s) { return '<option>' + s + '</option>'; }).join('');
+  document.getElementById('pDate').value = todayStr();
+  document.getElementById('vDate').value = todayStr();
+  show('dashboard');
+  setInterval(function () { if (document.getElementById('view-board').classList.contains('active')) loadBoard(); }, 60000);
+});
+
+/* dashboard */
+function loadDashboard() {
+  gs('getPlantBoard').then(function (d) {
+    var t = d.tiles;
+    var running = t.filter(function (x) { return x.state === 'green' || x.state === 'amber'; }).length;
+    var down = t.filter(function (x) { return x.state === 'red'; }).length;
+    var planned = t.reduce(function (s, x) { return s + x.planned; }, 0);
+    var actual = t.reduce(function (s, x) { return s + x.actual; }, 0);
+    document.getElementById('kpis').innerHTML =
+      kpi('Machines running', running + '/' + t.length, 'live') +
+      kpi('Machines down', down, down ? 'attention needed' : 'all clear') +
+      kpi('Planned today', planned.toLocaleString(), 'units, all shifts') +
+      kpi('Actual today', actual.toLocaleString(), planned ? Math.round(actual / planned * 100) + '% of plan' : '—');
+  });
+  gs('getDispatchRisk').then(function (risk) {
+    document.getElementById('riskBody').innerHTML = risk.length ? risk.map(function (r) {
+      return '<tr><td class="id">' + esc(r.sku) + '</td><td class="num">' + r.planned.toLocaleString() + '</td><td class="num">' + r.actual.toLocaleString() +
+        '</td><td class="num">' + r.gapPct + '%</td><td class="mono">' + esc(r.dispatchDate || '—') + '</td><td><span class="pill ' + (r.priority === 'HIGH' ? 'danger' : 'grey') + '">' + esc(r.priority) + '</span></td></tr>';
+    }).join('') : '<tr><td colspan="6" style="color:var(--text-3)">No commitments at risk.</td></tr>';
+  });
+  gs('getOeeTrend').then(function (d) {
+    document.getElementById('oeeWorstBody').innerHTML = d.worst5.map(function (m) {
+      var pct = Math.round(m.avgOee * 100);
+      var band = pct >= 85 ? 'ok' : pct >= 70 ? 'warn' : 'danger';
+      return '<tr><td class="id">' + esc(m.machine) + '</td><td class="num">' + pct + '%</td><td><span class="pill ' + band + '">' + (band === 'ok' ? 'Good' : band === 'warn' ? 'Watch' : 'Poor') + '</span></td></tr>';
+    }).join('');
+  });
+}
+function kpi(l, v, s) { return '<div class="kpi"><div class="lbl">' + l + '</div><div class="val">' + v + '</div><div class="sub">' + s + '</div></div>'; }
+
+/* board */
+function loadBoard() {
+  gs('getPlantBoard').then(function (d) {
+    document.getElementById('boardTiles').innerHTML = d.tiles.map(function (t) {
+      var extra = t.state === 'red' ? '<div style="color:var(--danger);font-size:12px;margin-top:4px">DOWN ' + t.downMin + ' min · ' + esc(t.dtReason || '') + '</div>' : '';
+      return '<div class="tile ' + t.state + '"><div class="mc">' + esc(t.code) + ' · ' + esc(t.name) + '</div><div class="sec">' + esc(t.section) + '</div>' +
+        '<div class="nums">' + t.actual.toLocaleString() + ' / ' + t.planned.toLocaleString() + ' (' + t.pct + '%)</div>' +
+        '<div class="bar"><i style="width:' + Math.min(100, t.pct) + '%"></i></div>' + extra + '</div>';
+    }).join('');
+  });
+}
+
+/* plans */
+function loadPlans() {
+  var d = document.getElementById('pDate').value || todayStr();
+  document.getElementById('planDateLbl').textContent = d;
+  gs('getPlans', d).then(function (plans) {
+    document.getElementById('plansBody').innerHTML = plans.length ? plans.map(function (p) {
+      return '<tr><td class="id">' + esc(p.planId) + '</td><td>' + esc(p.machine) + '</td><td>' + esc(p.sku) + '</td><td class="num">' + Number(p.plannedQty).toLocaleString() +
+        '</td><td class="num" style="' + (p.overloaded ? 'color:var(--danger);font-weight:600' : '') + '">' + p.loadPct + '%</td>' +
+        '<td><span class="pill ' + (p.overloaded ? 'danger' : p.status === 'active' ? 'ok' : 'grey') + '">' + (p.overloaded ? 'Overloaded' : esc(p.status)) + '</span></td></tr>';
+    }).join('') : '<tr><td colspan="6" style="color:var(--text-3)">No plans for this date. <a href="javascript:void(0)" onclick="document.getElementById(\'pQty\').focus()">Create one above.</a></td></tr>';
+  });
+}
+function savePlan() {
+  var btn = document.getElementById('btnSavePlan'); btn.disabled = true;
+  gs('savePlan', {
+    date: document.getElementById('pDate').value, shift: document.getElementById('pShift').value,
+    machine: document.getElementById('pMachine').value, sku: document.getElementById('pSku').value,
+    plannedQty: document.getElementById('pQty').value, priority: document.getElementById('pPriority').value,
+    dispatchDate: document.getElementById('pDispatch').value
+  }).then(function (r) {
+    btn.disabled = false;
+    toast('Plan ' + r.planId + ' created' + (r.overloaded ? ' — slot OVERLOADED at ' + r.loadPct + '% of capacity' : ''), r.overloaded);
+    loadPlans();
+  }).catch(function () { btn.disabled = false; });
+}
+
+/* logging */
+var ACTIVE_PLAN = null;
+function loadActivePlan() {
+  var m = document.getElementById('lMachine').value;
+  gs('getPlans', todayStr()).then(function (plans) {
+    ACTIVE_PLAN = plans.filter(function (p) { return p.machine === m && p.status === 'active'; })[0] || null;
+    document.getElementById('activePlanInfo').innerHTML = ACTIVE_PLAN
+      ? 'Active plan: <b class="mono">' + esc(ACTIVE_PLAN.planId) + '</b> · ' + esc(ACTIVE_PLAN.sku) + ' · planned ' + Number(ACTIVE_PLAN.plannedQty).toLocaleString()
+      : '<span style="color:var(--warn)">No active plan for this machine today.</span>';
+  });
+}
+function logProd() {
+  if (!ACTIVE_PLAN) { toast('No active plan selected. Pick a machine with a plan.', true); return; }
+  var btn = document.getElementById('btnLog'); btn.disabled = true;
+  gs('logProduction', {
+    machine: document.getElementById('lMachine').value, planId: ACTIVE_PLAN.planId,
+    hourSlot: document.getElementById('lSlot').value,
+    qtyOk: document.getElementById('lOk').value, qtyRejected: document.getElementById('lRej').value,
+    qtyRework: document.getElementById('lRw').value, remarks: document.getElementById('lRemarks').value
+  }).then(function (r) {
+    btn.disabled = false;
+    toast('Entry logged' + (r.lateFlag ? ' — flagged LATE (>2h after slot)' : ''));
+    ['lOk','lRej','lRw'].forEach(function (id) { document.getElementById(id).value = 0; });
+  }).catch(function () { btn.disabled = false; });
+}
+
+/* downtime */
+function fillSubReasons() {
+  var c = document.getElementById('dCat').value;
+  var subs = (BOOT && BOOT.dtReasons[c]) || [];
+  document.getElementById('dSub').innerHTML = subs.map(function (s) { return '<option>' + esc(s) + '</option>'; }).join('');
+}
+function startDt() {
+  var btn = document.getElementById('btnDt'); btn.disabled = true;
+  gs('startDowntime', {
+    machine: document.getElementById('dMachine').value,
+    category: document.getElementById('dCat').value, subReason: document.getElementById('dSub').value
+  }).then(function (r) { btn.disabled = false; toast('Downtime ' + r.dtId + ' started'); loadOpenDt(); loadBoard(); })
+    .catch(function () { btn.disabled = false; });
+}
+function loadOpenDt() {
+  gs('getPlantBoard').then(function (d) {
+    var down = d.tiles.filter(function (t) { return t.state === 'red'; });
+    document.getElementById('openDtList').innerHTML = down.length ? down.map(function (t) {
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">' +
+        '<div><b>' + esc(t.code) + '</b> · ' + esc(t.dtReason || '') + ' · <span class="mono" style="color:var(--danger)">' + t.downMin + ' min</span></div>' +
+        '<button class="btn" onclick="endDt(\'' + esc(t.code) + '\')">End downtime</button></div>';
+    }).join('') : '<p style="font-size:13px;color:var(--text-3)">No open downtime events.</p>';
+  });
+}
+function endDt(machine) {
+  gs('getPlantBoard').then(function () {
+    // resolve the open dtId server-side via machine — use dedicated endpoint pattern
+    google.script.run.withSuccessHandler(function (r) {
+      if (r.ok) { toast('Downtime closed: ' + r.data.minutes + ' minutes'); loadOpenDt(); }
+      else toast(r.error, true);
+    }).endDowntimeByMachine(machine);
+  });
+}
+
+/* variance */
+function loadVariance() {
+  gs('getVarianceReport', document.getElementById('vDate').value || todayStr()).then(function (rep) {
+    document.getElementById('varBody').innerHTML = rep.length ? rep.map(function (r) {
+      var dt = Object.keys(r.dtByCat).map(function (c) { return c + ' ' + r.dtByCat[c] + 'm'; }).join(', ') || '—';
+      return '<tr><td class="id">' + esc(r.machine) + '</td><td>' + esc(r.sku) + '</td><td class="num">' + r.planned.toLocaleString() +
+        '</td><td class="num">' + r.produced.toLocaleString() + '</td><td class="num" style="' + (r.shortfall > 0 ? 'color:var(--danger)' : 'color:var(--ok)') + '">' + r.shortfall.toLocaleString() +
+        '</td><td class="num">' + (Math.round(r.rejPct * 10) / 10) + '%</td><td style="font-size:12px">' + esc(dt) + '</td></tr>';
+    }).join('') : '<tr><td colspan="7" style="color:var(--text-3)">No plans for this date.</td></tr>';
+  });
+}
+function loadChangeover() {
+  gs('getChangeoverReport').then(function (rep) {
+    document.getElementById('coBody').innerHTML = rep.length ? rep.map(function (r) {
+      return '<tr><td class="id">' + esc(r.machine) + '</td><td class="num">' + r.count + '</td><td class="num">' + r.avgMin + '</td><td class="num">' + r.totalMin + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" style="color:var(--text-3)">No changeover events recorded.</td></tr>';
+  });
+}
+
+/* about */
+function loadAbout() {
+  gs('getAboutData').then(function (a) {
+    document.getElementById('abVersion').textContent = a.version + ' · built ' + a.buildDate + ' · Google Apps Script + Sheets';
+    document.getElementById('abVerified').textContent = 'Last verified against build: ' + new Date(a.lastVerified).toLocaleString();
+    var writers = {Machines:'setup/Admin',Products:'setup/Admin',ProductionPlans:'Planner (savePlan)',ProductionEntries:'Operator (logProduction)',DowntimeEvents:'Operator (start/endDowntime)',Shifts:'setup',OEEResults:'runOeeEngine trigger',Users:'Admin',Config:'Admin/setup',AuditLog:'every write',JobRuns:'every trigger run'};
+    var readers = {Machines:'all screens',Products:'plan builder, OEE',ProductionPlans:'board, logging, variance',ProductionEntries:'board, OEE, variance',DowntimeEvents:'board, OEE, variance',Shifts:'plan builder',OEEResults:'dashboard',Users:'auth',Config:'all logic',AuditLog:'Admin',JobRuns:'Admin'};
+    document.getElementById('abSheets').innerHTML = a.sheets.map(function (s) {
+      return '<tr><td class="id">' + esc(s.name) + '</td><td style="font-size:12px">' + esc(s.columns.join(', ')) + '</td><td>' + esc(writers[s.name] || '—') + '</td><td>' + esc(readers[s.name] || '—') + '</td></tr>';
+    }).join('');
+    var c = a.config;
+    var cards = [
+      ['OEE', 'OEE = Availability × Performance × Quality', 'Availability = (480 − downtime min)/480 · Performance = (total qty × std cycle sec / 60)/run min (capped 1.2) · Quality = OK qty / total qty. Inputs: ProductionEntries.qtyOk/qtyRejected/qtyRework, DowntimeEvents.minutes, Products.stdCycleSec.', '≥85% green · 70–85% amber · <70% red. Computed nightly at 01:00 (runOeeEngine) into OEEResults.', 'Zero total qty → Quality 0; no entries → machine skipped for that shift.'],
+      ['Board state', 'red if open downtime · amber if actual < expected × (1 − BEHIND_PLAN_PCT/100) · green otherwise · grey if no plan', 'Expected = plannedQty × (hours elapsed since 06:00 / 8). BEHIND_PLAN_PCT currently = ' + c.BEHIND_PLAN_PCT + '% (Config!BEHIND_PLAN_PCT).', 'Recomputed on every board poll (60s client refresh).', 'Machines with a plan but zero entries show 0% and go amber once expected > 0.'],
+      ['Late entry flag', 'lateFlag = (current hour − slot hour) > LATE_ENTRY_HOURS', 'LATE_ENTRY_HOURS = ' + c.LATE_ENTRY_HOURS + ' (Config). Entry is accepted but flagged for the variance review.', 'Computed on submit (logProduction).', 'Backdated slots earlier the same day flag correctly; cross-midnight slots not supported.'],
+      ['Downtime escalation', 'open minutes > DOWNTIME_EMAIL_MIN → section head email · > DOWNTIME_ESCALATE_MIN → plant head email', 'Thresholds: ' + c.DOWNTIME_EMAIL_MIN + ' / ' + c.DOWNTIME_ESCALATE_MIN + ' min (Config). Checked every 30 min by checkOpenDowntime.', 'Time-driven trigger, every 30 minutes.', 'Emails repeat every check while open — intentional pressure; closed events never email.'],
+      ['Production block on downtime', 'logProduction rejected while any DowntimeEvents row has machine = X AND open = TRUE', 'Enforced server-side before any write; the error names the open event ID.', 'On every logProduction call.', 'Two tabs racing: LockService serializes; second write sees the open event.'],
+      ['Dispatch risk', 'gap% = (Σplanned − Σactual)/Σplanned × 100 > DISPATCH_RISK_TOLERANCE_PCT → SKU listed', 'Tolerance = ' + c.DISPATCH_RISK_TOLERANCE_PCT + '% (Config). Cumulative across all plans per SKU; nearest dispatchDate shown.', 'Computed on dashboard load.', 'SKUs with zero planned qty are skipped (no division by zero).'],
+      ['Capacity overload', 'load% = plannedQty / (ratedCapacityHr × 8) × 100 > CAPACITY_OVERLOAD_PCT → red flag', 'Threshold = ' + c.CAPACITY_OVERLOAD_PCT + '% (Config). Machines.ratedCapacityHr is per-machine.', 'Computed at plan save and plan list render.', 'Plans still save when overloaded — the flag is a decision aid, not a block.'],
+      ['Changeover analytics', 'avg changeover min = Σ minutes(category=changeover) / event count per machine', 'DowntimeEvents.category = "changeover" only; open events excluded.', 'Computed on variance screen load.', 'SKU-pair sequencing detail requires remarks convention "from→to".']
+    ];
+    document.getElementById('abLogic').innerHTML = cards.map(function (x) {
+      return '<div class="logic-card"><h4>' + x[0] + '</h4><div class="formula">' + esc(x[1]) + '</div>' +
+        '<p><b>Inputs &amp; thresholds:</b> ' + esc(x[2]) + '</p><p><b>Bands / behavior:</b> ' + esc(x[3]) + '</p><p><b>Edge cases:</b> ' + esc(x[4]) + '</p></div>';
+    }).join('');
+  });
+}
+</script>
+</body>
+</html>
